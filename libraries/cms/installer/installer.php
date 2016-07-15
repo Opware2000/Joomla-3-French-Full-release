@@ -103,15 +103,6 @@ class JInstaller extends JAdapter
 	protected $redirect_url = null;
 
 	/**
-	 * JInstaller instance container.
-	 *
-	 * @var    JInstaller
-	 * @since  3.1
-	 * @deprecated  4.0
-	 */
-	protected static $instance;
-
-	/**
 	 * JInstaller instances container.
 	 *
 	 * @var    JInstaller[]
@@ -150,13 +141,7 @@ class JInstaller extends JAdapter
 	{
 		if (!isset(self::$instances[$basepath]))
 		{
-			self::$instances[$basepath] = new JInstaller($basepath, $classprefix, $adapterfolder);
-
-			// For B/C, we load the first instance into the static $instance container, remove at 4.0
-			if (!isset(self::$instance))
-			{
-				self::$instance = self::$instances[$basepath];
-			}
+			self::$instances[$basepath] = new static($basepath, $classprefix, $adapterfolder);
 		}
 
 		return self::$instances[$basepath];
@@ -454,8 +439,7 @@ class JInstaller extends JAdapter
 
 		// Fire the onExtensionBeforeInstall event.
 		JPluginHelper::importPlugin('extension');
-		$dispatcher = JEventDispatcher::getInstance();
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionBeforeInstall',
 			array(
 				'method' => 'install',
@@ -469,7 +453,7 @@ class JInstaller extends JAdapter
 		$result = $adapter->install();
 
 		// Fire the onExtensionAfterInstall
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionAfterInstall',
 			array('installer' => clone $this, 'eid' => $result)
 		);
@@ -560,8 +544,7 @@ class JInstaller extends JAdapter
 
 		// Fire the onExtensionBeforeInstall event.
 		JPluginHelper::importPlugin('extension');
-		$dispatcher = JEventDispatcher::getInstance();
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionBeforeInstall',
 			array(
 				'method' => 'discover_install',
@@ -575,7 +558,7 @@ class JInstaller extends JAdapter
 		$result = $adapter->discover_install();
 
 		// Fire the onExtensionAfterInstall
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionAfterInstall',
 			array('installer' => clone $this, 'eid' => $result)
 		);
@@ -666,14 +649,16 @@ class JInstaller extends JAdapter
 
 		// Fire the onExtensionBeforeUpdate event.
 		JPluginHelper::importPlugin('extension');
-		$dispatcher = JEventDispatcher::getInstance();
-		$dispatcher->trigger('onExtensionBeforeUpdate', array('type' => $this->manifest->attributes()->type, 'manifest' => $this->manifest));
+		JFactory::getApplication()->triggerEvent(
+			'onExtensionBeforeUpdate',
+			array('type' => $this->manifest->attributes()->type, 'manifest' => $this->manifest)
+		);
 
 		// Run the update
 		$result = $adapter->update();
 
 		// Fire the onExtensionAfterUpdate
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionAfterUpdate',
 			array('installer' => clone $this, 'eid' => $result)
 		);
@@ -711,14 +696,16 @@ class JInstaller extends JAdapter
 		// We don't load languages here, we get the extension adapter to work it out
 		// Fire the onExtensionBeforeUninstall event.
 		JPluginHelper::importPlugin('extension');
-		$dispatcher = JEventDispatcher::getInstance();
-		$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $identifier));
+		JFactory::getApplication()->triggerEvent(
+			'onExtensionBeforeUninstall',
+			array('eid' => $identifier)
+		);
 
 		// Run the uninstall
 		$result = $adapter->uninstall($identifier);
 
 		// Fire the onExtensionAfterInstall
-		$dispatcher->trigger(
+		JFactory::getApplication()->triggerEvent(
 			'onExtensionAfterUninstall',
 			array('installer' => clone $this, 'eid' => $identifier, 'result' => $result)
 		);
@@ -2339,6 +2326,12 @@ class JInstaller extends JAdapter
 
 		// Ensure the adapter type is part of the options array
 		$options['type'] = $adapter;
+
+		// Check for a possible service from the container otherwise manually instantiate the class
+		if (JFactory::getContainer()->exists($class))
+		{
+			return JFactory::getContainer()->get($class);
+		}
 
 		return new $class($this, $this->getDbo(), $options);
 	}

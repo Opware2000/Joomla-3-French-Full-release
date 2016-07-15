@@ -8,6 +8,7 @@
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\DI\Container;
 use Joomla\Registry\Registry;
 
 /**
@@ -40,6 +41,14 @@ abstract class JFactory
 	 * @since  11.1
 	 */
 	public static $config = null;
+
+	/**
+	 * Global container object
+	 *
+	 * @var    Container
+	 * @since  4.0
+	 */
+	public static $container = null;
 
 	/**
 	 * Container for JDate instances
@@ -87,6 +96,7 @@ abstract class JFactory
 	 *
 	 * @var    JDatabaseDriver
 	 * @since  11.1
+	 * @deprecated  5.0  Use the database service in the DI container
 	 */
 	public static $database = null;
 
@@ -103,9 +113,10 @@ abstract class JFactory
 	 *
 	 * Returns the global {@link JApplicationCms} object, only creating it if it doesn't already exist.
 	 *
-	 * @param   mixed   $id      A client identifier or name.
-	 * @param   array   $config  An optional associative array of configuration settings.
-	 * @param   string  $prefix  Application prefix
+	 * @param   mixed      $id         A client identifier or name.
+	 * @param   array      $config     An optional associative array of configuration settings.
+	 * @param   string     $prefix     Application prefix
+	 * @param   Container  $container  An optional dependency injection container to inject into the application.
 	 *
 	 * @return  JApplicationCms object
 	 *
@@ -113,7 +124,7 @@ abstract class JFactory
 	 * @since   11.1
 	 * @throws  Exception
 	 */
-	public static function getApplication($id = null, array $config = array(), $prefix = 'J')
+	public static function getApplication($id = null, array $config = array(), $prefix = 'JApplication', Container $container = null)
 	{
 		if (!self::$application)
 		{
@@ -122,7 +133,9 @@ abstract class JFactory
 				throw new Exception('Application Instantiation Error', 500);
 			}
 
-			self::$application = JApplicationCms::getInstance($id);
+			$container = $container ?: self::getContainer();
+
+			self::$application = JApplicationCms::getInstance($id, $prefix, $container);
 		}
 
 		return self::$application;
@@ -158,6 +171,25 @@ abstract class JFactory
 	}
 
 	/**
+	 * Get a container object
+	 *
+	 * Returns the global service container object, only creating it if it doesn't already exist.
+	 *
+	 * @return  Container
+	 *
+	 * @since   4.0
+	 */
+	public static function getContainer()
+	{
+		if (!self::$container)
+		{
+			self::$container = self::createContainer();
+		}
+
+		return self::$container;
+	}
+
+	/**
 	 * Get a session object.
 	 *
 	 * Returns the global {@link JSession} object, only creating it if it doesn't already exist.
@@ -168,15 +200,17 @@ abstract class JFactory
 	 *
 	 * @see     JSession
 	 * @since   11.1
+	 * @deprecated  5.0  Load the session service from the dependency injection container or via $app->getSession()
 	 */
 	public static function getSession(array $options = array())
 	{
-		if (!self::$session)
-		{
-			self::$session = self::createSession($options);
-		}
+		JLog::add(
+			__METHOD__ . '() is deprecated. Load the session from the dependency injection container or via JFactory::getApplication()->getSession().',
+			JLog::WARNING,
+			'deprecated'
+		);
 
-		return self::$session;
+		return self::getApplication()->getSession();
 	}
 
 	/**
@@ -326,7 +360,14 @@ abstract class JFactory
 	{
 		if (!self::$database)
 		{
-			self::$database = self::createDbo();
+			if (self::getContainer()->exists('JDatabaseDriver'))
+			{
+				self::$database = self::getContainer()->get('JDatabaseDriver');
+			}
+			else
+			{
+				self::$database = self::createDbo();
+			}
 		}
 
 		return self::$database;
@@ -577,6 +618,24 @@ abstract class JFactory
 	}
 
 	/**
+	 * Create a container object
+	 *
+	 * @return  Container
+	 *
+	 * @since   4.0
+	 */
+	protected static function createContainer()
+	{
+		$container = (new Container)
+			->registerServiceProvider(new \Joomla\Cms\Service\Provider\Application)
+			->registerServiceProvider(new \Joomla\Cms\Service\Provider\Database)
+			->registerServiceProvider(new \Joomla\Cms\Service\Provider\Dispatcher)
+			->registerServiceProvider(new \Joomla\Cms\Service\Provider\Session);
+
+		return $container;
+	}
+
+	/**
 	 * Create a session object
 	 *
 	 * @param   array  $options  An array containing session options
@@ -584,9 +643,12 @@ abstract class JFactory
 	 * @return  JSession object
 	 *
 	 * @since   11.1
+	 * @deprecated  5.0  Load the session service from the dependency injection container or via $app->getSession()
 	 */
 	protected static function createSession(array $options = array())
 	{
+		JLog::add(__METHOD__ . '() is deprecated. The session should be a service in the dependency injection container.', JLog::WARNING, 'deprecated');
+
 		// Get the Joomla configuration settings
 		$conf    = self::getConfig();
 		$handler = $conf->get('session_handler', 'none');
@@ -612,9 +674,14 @@ abstract class JFactory
 	 *
 	 * @see     JDatabaseDriver
 	 * @since   11.1
+	 * @deprecated  5.0  Use the database service in the DI container
 	 */
 	protected static function createDbo()
 	{
+		JLog::add(
+			__METHOD__ . '() is deprecated, register a service provider to create a JDatabaseDriver instance instead.', JLog::WARNING, 'deprecated'
+		);
+
 		$conf = self::getConfig();
 
 		$host = $conf->get('host');

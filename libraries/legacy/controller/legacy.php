@@ -300,15 +300,20 @@ class JControllerLegacy extends JObject
 			}
 		}
 
-		// Instantiate the class.
-		if (class_exists($class))
-		{
-			self::$instance = new $class($config);
-		}
-		else
+		if (!class_exists($class))
 		{
 			throw new InvalidArgumentException(JText::sprintf('JLIB_APPLICATION_ERROR_INVALID_CONTROLLER_CLASS', $class));
 		}
+
+		// Check for a possible service from the container otherwise manually instantiate the class
+		if (JFactory::getContainer()->exists($class))
+		{
+			self::$instance = JFactory::getContainer()->get($class);
+		}
+  		else
+  		{
+			self::$instance = new $class($config);
+  		}
 
 		return self::$instance;
 	}
@@ -488,23 +493,6 @@ class JControllerLegacy extends JObject
 	}
 
 	/**
-	 * Authorisation check
-	 *
-	 * @param   string  $task  The ACO Section Value to check access on.
-	 *
-	 * @return  boolean  True if authorised
-	 *
-	 * @since   12.2
-	 * @deprecated  13.3  Use JAccess instead.
-	 */
-	public function authorise($task)
-	{
-		JLog::add(__METHOD__ . ' is deprecated. Use JAccess instead.', JLog::WARNING, 'deprecated');
-
-		return true;
-	}
-
-	/**
 	 * Method to check whether an ID is in the edit list.
 	 *
 	 * @param   string   $context  The context for the session storage.
@@ -525,7 +513,7 @@ class JControllerLegacy extends JObject
 
 			if (defined('JDEBUG') && JDEBUG)
 			{
-				JLog::add(
+				$app->getLogger()->info(
 					sprintf(
 						'Checking edit ID %s.%s: %d %s',
 						$context,
@@ -533,8 +521,7 @@ class JControllerLegacy extends JObject
 						(int) $result,
 						str_replace("\n", ' ', print_r($values, 1))
 					),
-					JLog::INFO,
-					'controller'
+					array('category' => 'controller')
 				);
 			}
 
@@ -617,6 +604,12 @@ class JControllerLegacy extends JObject
 			{
 				return null;
 			}
+		}
+
+		// Check for a possible service from the container otherwise manually instantiate the class
+		if (JFactory::getContainer()->exists($viewClass))
+		{
+			return JFactory::getContainer()->get($viewClass);
 		}
 
 		return new $viewClass($config);
@@ -913,15 +906,14 @@ class JControllerLegacy extends JObject
 
 			if (defined('JDEBUG') && JDEBUG)
 			{
-				JLog::add(
+				$app->getLogger()->info(
 					sprintf(
 						'Holding edit ID %s.%s %s',
 						$context,
 						$id,
 						str_replace("\n", ' ', print_r($values, 1))
 					),
-					JLog::INFO,
-					'controller'
+					array('category' => 'controller')
 				);
 			}
 		}
@@ -1027,15 +1019,14 @@ class JControllerLegacy extends JObject
 
 			if (defined('JDEBUG') && JDEBUG)
 			{
-				JLog::add(
+				$app->getLogger()->info(
 					sprintf(
 						'Releasing edit ID %s.%s %s',
 						$context,
 						$id,
 						str_replace("\n", ' ', print_r($values, 1))
 					),
-					JLog::INFO,
-					'controller'
+					array('category' => 'controller')
 				);
 			}
 		}

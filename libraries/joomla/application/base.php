@@ -10,6 +10,10 @@
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\Application\AbstractApplication;
+use Joomla\Event\DispatcherAwareInterface;
+use Joomla\Event\DispatcherAwareTrait;
+use Joomla\Event\DispatcherInterface;
+use Joomla\Event\Event;
 use Joomla\Registry\Registry;
 
 /**
@@ -19,15 +23,9 @@ use Joomla\Registry\Registry;
  *
  * @since  12.1
  */
-abstract class JApplicationBase extends AbstractApplication
+abstract class JApplicationBase extends AbstractApplication implements DispatcherAwareInterface
 {
-	/**
-	 * The application dispatcher object.
-	 *
-	 * @var    JEventDispatcher
-	 * @since  12.1
-	 */
-	protected $dispatcher;
+	use DispatcherAwareTrait;
 
 	/**
 	 * The application identity object.
@@ -81,10 +79,14 @@ abstract class JApplicationBase extends AbstractApplication
 	 */
 	public function registerEvent($event, $handler)
 	{
-		if ($this->dispatcher instanceof JEventDispatcher)
+		try
 		{
-			$this->dispatcher->register($event, $handler);
+			$this->getDispatcher()->addListener($event, $handler);
 		}
+		catch (UnexpectedValueException $e)
+  		{
+			// No dispatcher is registered, don't throw an error (mimics old behavior)
+  		}
 
 		return $this;
 	}
@@ -92,41 +94,47 @@ abstract class JApplicationBase extends AbstractApplication
 	/**
 	 * Calls all handlers associated with an event group.
 	 *
-	 * @param   string  $event  The event name.
-	 * @param   array   $args   An array of arguments (optional).
+	 * This is a legacy method, implementing old-style (Joomla! 3.x) plugin calls. It's best to go directly through the
+	 * Dispatcher and handle the returned EventInterface object instead of going through this method. This method is
+	 * deprecated and will be removed in Joomla! 5.x.
+	 *
+	 * This method will only return the 'result' argument of the event
+	 *
+	 * @param   string        $eventName  The event name.
+	 * @param   array|Event   $args       An array of arguments or an Event object (optional).
 	 *
 	 * @return  array   An array of results from each function call, or null if no dispatcher is defined.
 	 *
-	 * @since   12.1
+	 * @since       12.1
+	 * @throws      InvalidArgumentException
+	 * @deprecated  5.0
 	 */
-	public function triggerEvent($event, array $args = null)
+	public function triggerEvent($eventName, $args = array())
 	{
-		if ($this->dispatcher instanceof JEventDispatcher)
+		$dispatcher = $this->getDispatcher();
+
+		if ($this->dispatcher instanceof DispatcherInterface)
 		{
-			return $this->dispatcher->trigger($event, $args);
+			if ($args instanceof Event)
+			{
+				$event = $args;
+			}
+			elseif (is_array($args))
+			{
+				$event = new Event($eventName, $args);
+			}
+			else
+			{
+				throw new InvalidArgumentException('The arguments must either be an event or an array');
+			}
+
+			$result = $dispatcher->dispatch($eventName, $event);
+
+			// TODO - There are still test cases where the result isn't defined, temporarily leave the isset check in place
+			return !isset($result['result']) || is_null($result['result']) ? [] : $result['result'];
 		}
 
 		return null;
-	}
-
-	/**
-	 * Allows the application to load a custom or default dispatcher.
-	 *
-	 * The logic and options for creating this object are adequately generic for default cases
-	 * but for many applications it will make sense to override this method and create event
-	 * dispatchers, if required, based on more specific needs.
-	 *
-	 * @param   JEventDispatcher  $dispatcher  An optional dispatcher object. If omitted, the factory dispatcher is created.
-	 *
-	 * @return  JApplicationBase This method is chainable.
-	 *
-	 * @since   12.1
-	 */
-	public function loadDispatcher(JEventDispatcher $dispatcher = null)
-	{
-		$this->dispatcher = ($dispatcher === null) ? JEventDispatcher::getInstance() : $dispatcher;
-
-		return $this;
 	}
 
 	/**

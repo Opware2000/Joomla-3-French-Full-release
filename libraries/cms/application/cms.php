@@ -9,15 +9,21 @@
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\DI\Container;
+use Joomla\DI\ContainerAwareInterface;
+use Joomla\DI\ContainerAwareTrait;
 use Joomla\Registry\Registry;
+use Joomla\Session\SessionEvent;
 
 /**
  * Joomla! CMS Application class
  *
  * @since  3.2
  */
-class JApplicationCms extends JApplicationWeb
+class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 {
+	use ContainerAwareTrait;
+
 	/**
 	 * Array of options for the JDocument object
 	 *
@@ -88,24 +94,25 @@ class JApplicationCms extends JApplicationWeb
 	/**
 	 * Class constructor.
 	 *
-	 * @param   JInput                 $input   An optional argument to provide dependency injection for the application's
-	 *                                          input object.  If the argument is a JInput object that object will become
-	 *                                          the application's input object, otherwise a default input object is created.
-	 * @param   Registry               $config  An optional argument to provide dependency injection for the application's
-	 *                                          config object.  If the argument is a Registry object that object will become
-	 *                                          the application's config object, otherwise a default config object is created.
-	 * @param   JApplicationWebClient  $client  An optional argument to provide dependency injection for the application's
-	 *                                          client object.  If the argument is a JApplicationWebClient object that object will become
-	 *                                          the application's client object, otherwise a default client object is created.
+	 * @param   JInput                 $input      An optional argument to provide dependency injection for the application's
+	 *                                             input object.  If the argument is a JInput object that object will become
+	 *                                             the application's input object, otherwise a default input object is created.
+	 * @param   Registry               $config     An optional argument to provide dependency injection for the application's
+	 *                                             config object.  If the argument is a Registry object that object will become
+	 *                                             the application's config object, otherwise a default config object is created.
+	 * @param   JApplicationWebClient  $client     An optional argument to provide dependency injection for the application's
+	 *                                             client object.  If the argument is a JApplicationWebClient object that object will become
+	 *                                             the application's client object, otherwise a default client object is created.
+	 * @param   Container              $container  Dependency injection container.
 	 *
 	 * @since   3.2
 	 */
-	public function __construct(JInput $input = null, Registry $config = null, JApplicationWebClient $client = null)
+	public function __construct(JInput $input = null, Registry $config = null, JApplicationWebClient $client = null, Container $container = null)
 	{
-		parent::__construct($input, $config, $client);
+		$container = $container ?: new Container;
+		$this->setContainer($container);
 
-		// Load and set the dispatcher
-		$this->loadDispatcher();
+		parent::__construct($input, $config, $client, $container);
 
 		// If JDEBUG is defined, load the profiler instance
 		if (defined('JDEBUG') && JDEBUG)
@@ -124,29 +131,64 @@ class JApplicationCms extends JApplicationWeb
 		{
 			$this->config->set('session_name', $this->getName());
 		}
-
-		// Create the session if a session name is passed.
-		if ($this->config->get('session') !== false)
-		{
-			$this->loadSession();
-		}
 	}
 
 	/**
 	 * After the session has been started we need to populate it with some default values.
 	 *
+	 * @param   SessionEvent  $event  Session event being triggered
+	 *
 	 * @return  void
 	 *
 	 * @since   3.2
 	 */
-	public function afterSessionStart()
+	public function afterSessionStart(SessionEvent $event)
 	{
-		$session = JFactory::getSession();
+		$session = $event->getSession();
 
 		if ($session->isNew())
 		{
 			$session->set('registry', new Registry('session'));
 			$session->set('user', new JUser);
+		}
+
+		// TODO: At some point we need to get away from having session data always in the db.
+		$db   = JFactory::getDbo();
+		$time = time();
+
+		// Get the session handler from the configuration.
+		$handler = $this->get('session_handler', 'none');
+
+		// Purge expired session data if not using the database handler; the handler will run garbage collection as a native part of PHP's API
+		if ($handler != 'database' && $time % 2)
+		{
+			// The modulus introduces a little entropy, making the flushing less accurate but fires the query less than half the time.
+			try
+			{
+				$db->setQuery(
+					$db->getQuery(true)
+						->delete($db->quoteName('#__session'))
+						->where($db->quoteName('time') . ' < ' . $db->quote((int) ($time - $session->getExpire())))
+				)->execute();
+			}
+			catch (RuntimeException $e)
+			{
+				/*
+				 * The database API logs errors on failures so we don't need to add any error handling mechanisms here.
+				 * Since garbage collection does not result in a fatal error when run in the session API, we don't allow it here either.
+				 */
+			}
+		}
+
+		/*
+		 * Check for extra session metadata when:
+		 *
+		 * 1) The database handler is in use and the session is new
+		 * 2) The database handler is not in use and the time is an even numbered second or the session is new
+		 */
+		if (($handler != 'database' && ($time % 2 || $session->isNew())) || ($handler == 'database' && $session->isNew()))
+		{
+			$this->checkSession();
 		}
 	}
 
@@ -178,34 +220,56 @@ class JApplicationCms extends JApplicationWeb
 		// If the session record doesn't exist initialise it.
 		if (!$exists)
 		{
-			$query->clear();
+			$handler = $this->get('session_handler', 'none');
 
 			if ($session->isNew())
 			{
-				$query->insert($db->quoteName('#__session'))
-					->columns($db->quoteName('session_id') . ', ' . $db->quoteName('client_id') . ', ' . $db->quoteName('time'))
-					->values($db->quote($session->getId()) . ', ' . (int) $this->getClientId() . ', ' . $db->quote((int) time()));
-				$db->setQuery($query);
+				// Default column/value set
+				$columns = array($db->quoteName('session_id'), $db->quoteName('client_id'));
+				$values  = array($db->quote($session->getId()), (int) $this->getClientId());
+
+				// If the database session handler is not in use, append the time to the row
+				if ($handler != 'database')
+				{
+					$columns[] = $db->quoteName('time');
+					$values[]  = (int) time();
+				}
 			}
 			else
 			{
-				$query->insert($db->quoteName('#__session'))
-					->columns(
-						$db->quoteName('session_id') . ', ' . $db->quoteName('client_id') . ', ' . $db->quoteName('guest') . ', ' .
-						$db->quoteName('time') . ', ' . $db->quoteName('userid') . ', ' . $db->quoteName('username')
-					)
-					->values(
-						$db->quote($session->getId()) . ', ' . (int) $this->getClientId() . ', ' . (int) $user->get('guest') . ', ' .
-						$db->quote((int) $session->get('session.timer.start')) . ', ' . (int) $user->get('id') . ', ' . $db->quote($user->get('username'))
-					);
+				// Default column/value set
+				$columns = array(
+					$db->quoteName('session_id'),
+					$db->quoteName('client_id'),
+					$db->quoteName('guest'),
+					$db->quoteName('userid'),
+					$db->quoteName('username')
+				);
+				$values = array(
+					$db->quote($session->getId()),
+					(int) $this->getClientId(),
+					(int) $user->guest,
+					(int) $user->id,
+					$db->quote($user->username)
+				);
 
-				$db->setQuery($query);
+				// If the database session handler is not in use, append the time to the row
+				if ($handler != 'database')
+				{
+					$columns[] = $db->quoteName('time');
+					$values[]  = (int) $session->get('session.timer.start');
+				}
 			}
 
 			// If the insert failed, exit the application.
 			try
 			{
-				$db->execute();
+				$db->setQuery(
+					$db->getQuery(true)
+						->insert($db->quoteName('#__session'))
+						->columns($columns)
+						->values(implode(', ', $values))
+				)->execute();
 			}
 			catch (RuntimeException $e)
 			{
@@ -382,26 +446,36 @@ class JApplicationCms extends JApplicationWeb
 	 *
 	 * This method must be invoked as: $web = JApplicationCms::getInstance();
 	 *
-	 * @param   string  $name  The name (optional) of the JApplicationCms class to instantiate.
+	 * @param   string     $name       The name (optional) of the JApplicationCms class to instantiate.
+	 * @param   string     $prefix     The class name prefix of the object.
+	 * @param   Container  $container  An optional dependency injection container to inject into the application.
 	 *
 	 * @return  JApplicationCms
 	 *
 	 * @since   3.2
 	 * @throws  RuntimeException
 	 */
-	public static function getInstance($name = null)
+	public static function getInstance($name = null, $prefix = 'JApplication', Container $container = null)
 	{
 		if (empty(static::$instances[$name]))
 		{
 			// Create a JApplicationCms object.
-			$classname = 'JApplication' . ucfirst($name);
+			$classname = $prefix . ucfirst($name);
 
 			if (!class_exists($classname))
 			{
 				throw new RuntimeException(JText::sprintf('JLIB_APPLICATION_ERROR_APPLICATION_LOAD', $name), 500);
 			}
 
-			static::$instances[$name] = new $classname;
+			if ($container && $container->exists($classname))
+			{
+				static::$instances[$name] = $container->get($classname);
+			}
+			else
+			{
+				// TODO - This creates an implicit hard requirement on the JApplicationCms constructor... If we ever get around to "true" DI, this'll go away anyway
+				static::$instances[$name] = new $classname(null, null, null, $container);
+			}
 		}
 
 		return static::$instances[$name];
@@ -658,6 +732,9 @@ class JApplicationCms extends JApplicationWeb
 
 		$this->set('editor', $editor);
 
+		// Load the behaviour plugins
+		JPluginHelper::importPlugin('behaviour');
+
 		// Trigger the onAfterInitialise event.
 		JPluginHelper::importPlugin('system');
 		$this->triggerEvent('onAfterInitialise');
@@ -685,99 +762,6 @@ class JApplicationCms extends JApplicationWeb
 	public function isSite()
 	{
 		return ($this->getClientId() === 0);
-	}
-
-	/**
-	 * Allows the application to load a custom or default session.
-	 *
-	 * The logic and options for creating this object are adequately generic for default cases
-	 * but for many applications it will make sense to override this method and create a session,
-	 * if required, based on more specific needs.
-	 *
-	 * @param   JSession  $session  An optional session object. If omitted, the session is created.
-	 *
-	 * @return  JApplicationCms  This method is chainable.
-	 *
-	 * @since   3.2
-	 */
-	public function loadSession(JSession $session = null)
-	{
-		if ($session !== null)
-		{
-			$this->session = $session;
-
-			return $this;
-		}
-
-		// Generate a session name.
-		$name = JApplicationHelper::getHash($this->get('session_name', get_class($this)));
-
-		// Calculate the session lifetime.
-		$lifetime = (($this->get('lifetime')) ? $this->get('lifetime') * 60 : 900);
-
-		// Initialize the options for JSession.
-		$options = array(
-			'name'   => $name,
-			'expire' => $lifetime
-		);
-
-		switch ($this->getClientId())
-		{
-			case 0:
-				if ($this->get('force_ssl') == 2)
-				{
-					$options['force_ssl'] = true;
-				}
-
-				break;
-
-			case 1:
-				if ($this->get('force_ssl') >= 1)
-				{
-					$options['force_ssl'] = true;
-				}
-
-				break;
-		}
-
-		$this->registerEvent('onAfterSessionStart', array($this, 'afterSessionStart'));
-
-		// There's an internal coupling to the session object being present in JFactory, need to deal with this at some point
-		$session = JFactory::getSession($options);
-		$session->initialise($this->input, $this->dispatcher);
-		$session->start();
-
-		// TODO: At some point we need to get away from having session data always in the db.
-		$db = JFactory::getDbo();
-
-		// Remove expired sessions from the database.
-		$time = time();
-
-		if ($time % 2)
-		{
-			// The modulus introduces a little entropy, making the flushing less accurate
-			// but fires the query less than half the time.
-			$query = $db->getQuery(true)
-				->delete($db->quoteName('#__session'))
-				->where($db->quoteName('time') . ' < ' . $db->quote((int) ($time - $session->getExpire())));
-
-			$db->setQuery($query);
-			$db->execute();
-		}
-
-		// Get the session handler from the configuration.
-		$handler = $this->get('session_handler', 'none');
-
-		if (($handler != 'database' && ($time % 2 || $session->isNew()))
-			|| ($handler == 'database' && $session->isNew()))
-		{
-			$this->checkSession();
-		}
-
-		// Set the session object.
-		$this->session = $session;
-
-		return $this;
 	}
 
 	/**
@@ -895,7 +879,7 @@ class JApplicationCms extends JApplicationWeb
 		// If status is success, any error will have been raised by the user plugin
 		if ($response->status !== JAuthentication::STATUS_SUCCESS)
 		{
-			JLog::add($response->error_message, JLog::WARNING, 'jerror');
+			$this->getLogger()->warning($response->error_message, array('category' => 'jerror'));
 		}
 
 		return false;
@@ -986,11 +970,11 @@ class JApplicationCms extends JApplicationWeb
 			if (isset($args[1]) && !empty($args[1]) && (!is_bool($args[1]) && !is_int($args[1])))
 			{
 				// Log that passing the message to the function is deprecated
-				JLog::add(
-					'Passing a message and message type to JFactory::getApplication()->redirect() is deprecated. '
-					. 'Please set your message via JFactory::getApplication()->enqueueMessage() prior to calling redirect().',
-					JLog::WARNING,
-					'deprecated'
+				$this->getLogger()->warning(
+					'Passing a message and message type to ' . __METHOD__ . '() is deprecated. '
+					. 'Please set your message via ' . __CLASS__ . '::enqueueMessage() prior to calling ' . __CLASS__
+					. '::redirect().',
+					array('category' => 'deprecated')
 				);
 
 				$message = $args[1];

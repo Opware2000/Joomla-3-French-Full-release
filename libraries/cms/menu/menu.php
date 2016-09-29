@@ -81,9 +81,21 @@ class JMenu
 			}
 
 			// Decode the item params
-			$result = new Registry;
-			$result->loadString($item->params);
-			$item->params = $result;
+			try
+			{
+				$result = new Registry;
+				$result->loadString($item->params);
+				$item->params = $result;
+			}
+			catch (RuntimeException $e)
+			{
+				/**
+				 * Joomla shipped with a broken sample json string for 4 years which caused fatals with new
+				 * error checks. So for now we catch the exception here - but one day we should remove it and require
+				 * valid JSON.
+				 */
+				$item->params = new Registry;
+			}
 		}
 
 		$this->user = isset($options['user']) && $options['user'] instanceof JUser ? $options['user'] : JFactory::getUser();
@@ -106,24 +118,6 @@ class JMenu
 		{
 			// Create a JMenu object
 			$classname = 'JMenu' . ucfirst($client);
-
-			if (!class_exists($classname))
-			{
-				// @deprecated 4.0 Everything in this block is deprecated but the warning is only logged after the file_exists
-				// Load the menu object
-				$info = JApplicationHelper::getClientInfo($client, true);
-
-				if (is_object($info))
-				{
-					$path = $info->path . '/includes/menu.php';
-
-					if (file_exists($path))
-					{
-						JLog::add('Non-autoloadable JMenu subclasses are deprecated, support will be removed in 4.0.', JLog::WARNING, 'deprecated');
-						include_once $path;
-					}
-				}
-			}
 
 			if (!class_exists($classname))
 			{
@@ -208,7 +202,7 @@ class JMenu
 			return $this->_items[$this->_default['*']];
 		}
 
-		return null;
+		return;
 	}
 
 	/**
@@ -230,7 +224,7 @@ class JMenu
 			return $result;
 		}
 
-		return null;
+		return;
 	}
 
 	/**
@@ -249,7 +243,7 @@ class JMenu
 			return $item;
 		}
 
-		return null;
+		return;
 	}
 
 	/**

@@ -34,7 +34,8 @@ class PlgEditorCodemirror extends JPlugin
 	 */
 	protected $modeAlias = array(
 			'html' => 'htmlmixed',
-			'ini'  => 'properties'
+			'ini'  => 'properties',
+			'json' => array('name' => 'javascript', 'json' => true),
 		);
 
 	/**
@@ -297,14 +298,10 @@ class PlgEditorCodemirror extends JPlugin
 	{
 		$return = '';
 
-		$args = array(
-			'name'  => $name,
-			'event' => 'onGetInsertMethod'
+		$onGetInsertMethodEvent = new Event(
+			'onGetInsertMethod',
+			['name' => $name]
 		);
-
-		$onGetInsertMethodEvent = new Event('onGetInsertMethod', [
-			'name' => $name,
-		]);
 
 		$rawResults = $this->getDispatcher()->dispatch('onGetInsertMethod', $onGetInsertMethodEvent);
 		$results    = $rawResults['result'];
@@ -322,10 +319,13 @@ class PlgEditorCodemirror extends JPlugin
 
 		if (is_array($buttons) || (is_bool($buttons) && $buttons))
 		{
-			$buttonsEvent = new Event('getButtons', [
-				'name'    => $this->_name,
-				'buttons' => $buttons,
-			]);
+			$buttonsEvent = new Event(
+				'getButtons',
+				[
+					'name'    => $this->_name,
+					'buttons' => $buttons,
+				]
+			);
 
 			$buttonsResult = $this->getDispatcher()->dispatch('getButtons', $buttonsEvent);
 			$buttons       = $buttonsResult['result'];

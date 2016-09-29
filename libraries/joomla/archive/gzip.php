@@ -52,13 +52,13 @@ class JArchiveGzip implements JArchiveExtractable
 	 * @since   11.1
 	 * @throws  RuntimeException
 	 */
-	public function extract($archive, $destination, array $options = array ())
+	public function extract($archive, $destination, array $options = array())
 	{
 		$this->_data = null;
 
 		if (!extension_loaded('zlib'))
 		{
-			return $this->raiseWarning(100, 'The zlib extension is not available.');
+			throw new RuntimeException('The zlib extension is not available.');
 		}
 
 		if (isset($options['use_streams']) && $options['use_streams'] != false)
@@ -70,7 +70,7 @@ class JArchiveGzip implements JArchiveExtractable
 
 		if (!$this->_data)
 		{
-			return $this->raiseWarning(100, 'Unable to read archive');
+			throw new RuntimeException('Unable to read archive');
 		}
 
 		$position = $this->_getFilePosition();
@@ -78,12 +78,12 @@ class JArchiveGzip implements JArchiveExtractable
 
 		if (empty($buffer))
 		{
-			return $this->raiseWarning(100, 'Unable to decompress data');
+			throw new RuntimeException('Unable to decompress data');
 		}
 
 		if (JFile::write($destination, $buffer) === false)
 		{
-			return $this->raiseWarning(100, 'Unable to write archive');
+			throw new RuntimeException('Unable to write archive');
 		}
 
 		return true;
@@ -98,7 +98,7 @@ class JArchiveGzip implements JArchiveExtractable
 	 *
 	 * @return  boolean  True if successful
 	 */
-	protected function extractStream($archive, $destination, $options = array ())
+	protected function extractStream($archive, $destination, $options = array())
 	{
 		// New style! streams!
 		$input = JFactory::getStream();
@@ -108,7 +108,7 @@ class JArchiveGzip implements JArchiveExtractable
 
 		if (!$input->open($archive))
 		{
-			return $this->raiseWarning(100, 'Unable to read archive (gz)');
+			throw new RuntimeException('Unable to read archive (gz)');
 		}
 
 		$output = JFactory::getStream();
@@ -117,7 +117,7 @@ class JArchiveGzip implements JArchiveExtractable
 		{
 			$input->close();
 
-			return $this->raiseWarning(100, 'Unable to write archive (gz)');
+			throw new RuntimeException('Unable to write archive (gz)');
 		}
 
 		do
@@ -128,7 +128,7 @@ class JArchiveGzip implements JArchiveExtractable
 			{
 				$input->close();
 
-				return $this->raiseWarning(100, 'Unable to write file (gz)');
+				throw new RuntimeException('Unable to write file (gz)');
 			}
 		}
 
@@ -138,25 +138,6 @@ class JArchiveGzip implements JArchiveExtractable
 		$input->close();
 
 		return true;
-	}
-
-	/**
-	 * Temporary private method to isolate JError from the extract method
-	 * This code should be removed when JError is removed.
-	 *
-	 * @param   int     $code  The application-internal error code for this error
-	 * @param   string  $msg   The error message, which may also be shown the user if need be.
-	 *
-	 * @return mixed JError object or Runtime Exception
-	 */
-	private function raiseWarning($code, $msg)
-	{
-		if (class_exists('JError'))
-		{
-			return JError::raiseWarning($code, $msg);
-		}
-
-		throw new RuntimeException($msg);
 	}
 
 	/**
@@ -187,7 +168,7 @@ class JArchiveGzip implements JArchiveExtractable
 
 		if (!$info)
 		{
-			return $this->raiseWarning(100, 'Unable to decompress data.');
+			throw new RuntimeException('Unable to decompress data.');
 		}
 
 		$position += 10;

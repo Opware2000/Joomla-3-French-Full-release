@@ -70,24 +70,6 @@ class UsersHelper
 	}
 
 	/**
-	 * Gets a list of the actions that can be performed.
-	 *
-	 * @return  JObject
-	 *
-	 * @deprecated  3.2  Use JHelperContent::getActions() instead
-	 */
-	public static function getActions()
-	{
-		// Log usage of deprecated function
-		JLog::add(__METHOD__ . '() is deprecated, use JHelperContent::getActions() with new arguments order instead.', JLog::WARNING, 'deprecated');
-
-		// Get list of actions
-		$result = JHelperContent::getActions('com_users');
-
-		return $result;
-	}
-
-	/**
 	 * Get a list of filter options for the blocked state of a user.
 	 *
 	 * @return  array  An array of JHtmlOption elements.
@@ -130,31 +112,12 @@ class UsersHelper
 	 */
 	public static function getGroups()
 	{
-		$db = JFactory::getDbo();
-		$query = $db->getQuery(true)
-			->select('a.id AS value')
-			->select('a.title AS text')
-			->select('COUNT(DISTINCT b.id) AS level')
-			->from('#__usergroups as a')
-			->join('LEFT', '#__usergroups  AS b ON a.lft > b.lft AND a.rgt < b.rgt')
-			->group('a.id, a.title, a.lft, a.rgt')
-			->order('a.lft ASC');
-		$db->setQuery($query);
-
-		try
-		{
-			$options = $db->loadObjectList();
-		}
-		catch (RuntimeException $e)
-		{
-			JError::raiseNotice(500, $e->getMessage());
-
-			return null;
-		}
+		$options = JHelperUsergroups::getInstance()->getAll();
 
 		foreach ($options as &$option)
 		{
-			$option->text = str_repeat('- ', $option->level) . $option->text;
+			$option->value = $option->id;
+			$option->text = str_repeat('- ', $option->level) . $option->title;
 		}
 
 		return $options;
@@ -193,12 +156,6 @@ class UsersHelper
 	 */
 	public static function getTwoFactorMethods()
 	{
-		// Load the Joomla! RAD layer
-		if (!defined('FOF_INCLUDED'))
-		{
-			include_once JPATH_LIBRARIES . '/fof/include.php';
-		}
-
 		FOFPlatform::getInstance()->importPlugin('twofactorauth');
 		$identities = FOFPlatform::getInstance()->runPlugins('onUserTwofactorIdentify', array());
 

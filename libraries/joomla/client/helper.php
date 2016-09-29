@@ -48,7 +48,8 @@ class JClientHelper
 						'port' => $config->get('ftp_port'),
 						'user' => $config->get('ftp_user'),
 						'pass' => $config->get('ftp_pass'),
-						'root' => $config->get('ftp_root'));
+						'root' => $config->get('ftp_root'),
+					);
 					break;
 
 				default:
@@ -197,7 +198,7 @@ class JClientHelper
 	 *
 	 * @param   string  $client  The name of the client.
 	 *
-	 * @return  mixed  True, if FTP settings; JError if using legacy tree.
+	 * @return  boolean  True if credentials are present
 	 *
 	 * @since   11.1
 	 * @throws  InvalidArgumentException if credentials invalid
@@ -212,21 +213,12 @@ class JClientHelper
 		if ($user != '' && $pass != '')
 		{
 			// Add credentials to the session
-			if (self::setCredentials($client, $user, $pass))
+			if (!self::setCredentials($client, $user, $pass))
 			{
-				$return = false;
+				throw new InvalidArgumentException('Invalid user credentials');
 			}
-			else
-			{
-				if (class_exists('JError'))
-				{
-					$return = JError::raiseWarning('SOME_ERROR_CODE', JText::_('JLIB_CLIENT_ERROR_HELPER_SETCREDENTIALSFROMREQUEST_FAILED'));
-				}
-				else
-				{
-					throw new InvalidArgumentException('Invalid user credentials');
-				}
-			}
+
+			$return = false;
 		}
 		else
 		{

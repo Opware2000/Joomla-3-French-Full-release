@@ -100,7 +100,22 @@ abstract class AbstractRenderer implements RendererInterface
 	 */
 	protected function loadDocument()
 	{
-		return \JDocument::getInstance($this->type);
+		$attributes = array(
+			'charset'   => 'utf-8',
+			'lineend'   => 'unix',
+			'tab'       => "\t",
+			'language'  => 'en-GB',
+			'direction' => 'ltr',
+		);
+
+		// If there is a JLanguage instance in JFactory then let's pull the language and direction from its metadata
+		if (\JFactory::$language)
+		{
+			$attributes['language']  = \JFactory::getLanguage()->getTag();
+			$attributes['direction'] = \JFactory::getLanguage()->isRtl() ? 'rtl' : 'ltr';
+		}
+
+		return \JDocument::getInstance($this->type, $attributes);
 	}
 
 	/**

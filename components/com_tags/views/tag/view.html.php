@@ -94,15 +94,15 @@ class TagsViewTag extends JViewLegacy
 				!empty($itemElement->core_body)? $itemElement->text = $itemElement->core_body : $itemElement->text = null;
 
 				JPluginHelper::importPlugin('content');
-				JFactory::getApplication()->triggerEvent('onContentPrepare', array ('com_tags.tag', &$itemElement, &$itemElement->core_params, 0));
+				JFactory::getApplication()->triggerEvent('onContentPrepare', ['com_tags.tag', &$itemElement, &$itemElement->core_params, 0]);
 
-				$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', array('com_tags.tag', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', ['com_tags.tag', &$itemElement, &$itemElement->core_params, 0]);
 				$itemElement->event->afterDisplayTitle = trim(implode("\n", $results));
 
-				$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array('com_tags.tag', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', ['com_tags.tag', &$itemElement, &$itemElement->core_params, 0]);
 				$itemElement->event->beforeDisplayContent = trim(implode("\n", $results));
 
-				$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array('com_tags.tag', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', ['com_tags.tag', &$itemElement, &$itemElement->core_params, 0]);
 				$itemElement->event->afterDisplayContent = trim(implode("\n", $results));
 
 				// Write the results back into the body
@@ -204,7 +204,12 @@ class TagsViewTag extends JViewLegacy
 		// we need to get it from the menu item itself
 		$menu = $menus->getActive();
 
-		if ($menu)
+		if ($this->tags_title)
+		{
+			$this->params->def('page_heading', $this->tags_title);
+			$title = $this->tags_title;
+		}
+		elseif ($menu)
 		{
 			$this->params->def('page_heading', $this->params->get('page_title', $menu->title));
 			$title = $this->params->get('page_title', $menu->title);
@@ -213,11 +218,6 @@ class TagsViewTag extends JViewLegacy
 			{
 				$this->params->set('page_subheading', $menu->title);
 			}
-		}
-		else
-		{
-			$this->params->def('page_heading', $this->tags_title);
-			$title = $this->tags_title;
 		}
 
 		if (empty($title))

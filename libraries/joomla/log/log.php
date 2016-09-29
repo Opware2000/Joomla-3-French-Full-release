@@ -234,7 +234,8 @@ class JLog
 		$this->lookup[$signature] = (object) array(
 			'priorities' => $priorities,
 			'categories' => array_map('strtolower', (array) $categories),
-			'exclude' => (bool) $exclude);
+			'exclude' => (bool) $exclude,
+		);
 	}
 
 	/**

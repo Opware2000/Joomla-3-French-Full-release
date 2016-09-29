@@ -22,11 +22,11 @@ class FinderTableFilter extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  &$db  JDatabaseDriver connector object.
+	 * @param   JDatabaseDriver  $db  JDatabaseDriver connector object.
 	 *
 	 * @since   2.5
 	 */
-	public function __construct(&$db)
+	public function __construct(JDatabaseDriver $db)
 	{
 		parent::__construct('#__finder_filters', 'filter_id', $db);
 	}
@@ -215,15 +215,15 @@ class FinderTableFilter extends JTable
 	 */
 	public function store($updateNulls = false)
 	{
-		$date = JFactory::getDate();
-		$user = JFactory::getUser();
+		$date = JFactory::getDate()->toSql();
+		$userId = JFactory::getUser()->id;
 
-		$this->modified = $date->toSql();
+		$this->modified = $date;
 
 		if ($this->filter_id)
 		{
 			// Existing item
-			$this->modified_by = $user->get('id');
+			$this->modified_by = $userId;
 		}
 		else
 		{
@@ -231,12 +231,12 @@ class FinderTableFilter extends JTable
 			// so we don't touch it if it is set.
 			if (!(int) $this->created)
 			{
-				$this->created = $date->toSql();
+				$this->created = $date;
 			}
 
 			if (empty($this->created_by))
 			{
-				$this->created_by = $user->get('id');
+				$this->created_by = $userId;
 			}
 		}
 

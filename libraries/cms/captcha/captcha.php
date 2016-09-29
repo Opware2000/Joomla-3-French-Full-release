@@ -63,6 +63,7 @@ class JCaptcha implements DispatcherAwareInterface
 	public function __construct($captcha, $options)
 	{
 		$this->_name = $captcha;
+		$this->setDispatcher(JFactory::getApplication()->getDispatcher());
 		$this->_load($options);
 	}
 
@@ -91,7 +92,7 @@ class JCaptcha implements DispatcherAwareInterface
 			{
 				JFactory::getApplication()->enqueueMessage($e->getMessage(), 'error');
 
-				return null;
+				return;
 			}
 		}
 
@@ -99,7 +100,7 @@ class JCaptcha implements DispatcherAwareInterface
 	}
 
 	/**
-	 * Fire the onInit event to initialise the captcha plug-in.
+	 * Fire the onInit event to initialise the captcha plugin.
 	 *
 	 * @param   string  $id  The id of the field.
 	 *
@@ -109,9 +110,10 @@ class JCaptcha implements DispatcherAwareInterface
 	 */
 	public function initialise($id)
 	{
-		$event = new Event('onInit', [
-			'id' => $id
-		]);
+		$event = new Event(
+			'onInit',
+			['id' => $id]
+		);
 
 		try
 		{
@@ -152,11 +154,14 @@ class JCaptcha implements DispatcherAwareInterface
 			return '';
 		}
 
-		$event = new Event('onDisplay', [
-			'name'	=> $name,
-			'id'	=> $id ? $id : $name,
-			'class' => $class ? 'class="' . $class . '"' : '',
-		]);
+		$event = new Event(
+			'onDisplay',
+			[
+				'name'  => $name,
+				'id'    => $id ? $id : $name,
+				'class' => $class ? 'class="' . $class . '"' : '',
+			]
+		);
 
 		$result = $this->getDispatcher()->dispatch('onInit', $event);
 
@@ -181,9 +186,10 @@ class JCaptcha implements DispatcherAwareInterface
 			return false;
 		}
 
-		$event = new Event('onCheckAnswer', [
-			'code'	=> $code
-		]);
+		$event = new Event(
+			'onCheckAnswer',
+			['code'	=> $code]
+		);
 
 		$result = $this->getDispatcher()->dispatch('onCheckAnswer', $event);
 
@@ -192,7 +198,7 @@ class JCaptcha implements DispatcherAwareInterface
 	}
 
 	/**
-	 * Load the Captcha plug-in.
+	 * Load the Captcha plugin.
 	 *
 	 * @param   array  $options  Associative array of options.
 	 *

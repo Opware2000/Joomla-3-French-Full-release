@@ -222,7 +222,7 @@ class PlgUserJoomla extends JPlugin
 		// Register the needed session variables
 		$session->set('user', $instance);
 
-		// Check to see the the session already exists.
+		// Ensure the new session's metadata is written to the database
 		$this->app->checkSession();
 
 		// Purge the old session
@@ -261,7 +261,7 @@ class PlgUserJoomla extends JPlugin
 	 * @param   array  $user     Holds the user data.
 	 * @param   array  $options  Array holding options (client, ...).
 	 *
-	 * @return  object  True on success
+	 * @return  bool  True on success
 	 *
 	 * @since   1.5
 	 */
@@ -322,7 +322,7 @@ class PlgUserJoomla extends JPlugin
 	/**
 	 * This method will return a user object
 	 *
-	 * If options['autoregister'] is true, if the user doesn't exist yet he will be created
+	 * If options['autoregister'] is true, if the user doesn't exist yet they will be created
 	 *
 	 * @param   array  $user     Holds the user data.
 	 * @param   array  $options  Array holding options (remember, autoregister, group).

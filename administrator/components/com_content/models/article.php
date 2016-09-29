@@ -239,7 +239,7 @@ class ContentModelArticle extends JModelAdmin
 		// Reorder the articles within the category so the new article is first
 		if (empty($table->id))
 		{
-			$table->ordering = $table->getNextOrder('catid = ' . (int) $table->catid . ' AND state >= 0');
+			$table->reorder('catid = ' . (int) $table->catid . ' AND state >= 0');
 		}
 	}
 
@@ -444,7 +444,9 @@ class ContentModelArticle extends JModelAdmin
 				);
 				$data->set('catid', $app->input->getInt('catid', (!empty($filters['category_id']) ? $filters['category_id'] : null)));
 				$data->set('language', $app->input->getString('language', (!empty($filters['language']) ? $filters['language'] : null)));
-				$data->set('access', $app->input->getInt('access', (!empty($filters['access']) ? $filters['access'] : JFactory::getConfig()->get('access'))));
+				$data->set('access',
+					$app->input->getInt('access', (!empty($filters['access']) ? $filters['access'] : JFactory::getConfig()->get('access')))
+				);
 			}
 		}
 
@@ -502,8 +504,8 @@ class ContentModelArticle extends JModelAdmin
 			$catid = CategoriesHelper::validateCategoryId($data['catid'], 'com_content');
 		}
 
-		// Save New Category
-		if ($catid == 0)
+		// Save New Categoryg
+		if ($catid == 0 && $this->canCreateCategory())
 		{
 			$table = array();
 			$table['title'] = $data['catid'];
@@ -599,7 +601,6 @@ class ContentModelArticle extends JModelAdmin
 
 		if (parent::save($data))
 		{
-
 			if (isset($data['featured']))
 			{
 				$this->featured($this->getState($this->getName() . '.id'), $data['featured']);
@@ -638,9 +639,9 @@ class ContentModelArticle extends JModelAdmin
 		{
 			$db = $this->getDbo();
 			$query = $db->getQuery(true)
-						->update($db->quoteName('#__content'))
-						->set('featured = ' . (int) $value)
-						->where('id IN (' . implode(',', $pks) . ')');
+				->update($db->quoteName('#__content'))
+				->set('featured = ' . (int) $value)
+				->where('id IN (' . implode(',', $pks) . ')');
 			$db->setQuery($query);
 			$db->execute();
 
@@ -649,8 +650,8 @@ class ContentModelArticle extends JModelAdmin
 				// Adjust the mapping table.
 				// Clear the existing features settings.
 				$query = $db->getQuery(true)
-							->delete($db->quoteName('#__content_frontpage'))
-							->where('content_id IN (' . implode(',', $pks) . ')');
+					->delete($db->quoteName('#__content_frontpage'))
+					->where('content_id IN (' . implode(',', $pks) . ')');
 				$db->setQuery($query);
 				$db->execute();
 			}
@@ -670,12 +671,10 @@ class ContentModelArticle extends JModelAdmin
 
 				// Featuring.
 				$tuples = array();
-				$ordering = $table->getNextOrder();
 
 				foreach ($new_featured as $pk)
 				{
-					$tuples[] = $pk . ', ' . $ordering;
-					$ordering++;
+					$tuples[] = $pk . ', 0';
 				}
 
 				if (count($tuples))
@@ -697,6 +696,8 @@ class ContentModelArticle extends JModelAdmin
 
 			return false;
 		}
+
+		$table->reorder();
 
 		$this->cleanCache();
 
@@ -721,9 +722,7 @@ class ContentModelArticle extends JModelAdmin
 	}
 
 	/**
-	 * Auto-populate the model state.
-	 *
-	 * Note. Calling getState in this method will result in recursion.
+	 * Allows preprocessing of the JForm object.
 	 *
 	 * @param   JForm   $form   The form object
 	 * @param   array   $data   The data to be merged into the form object
@@ -735,8 +734,12 @@ class ContentModelArticle extends JModelAdmin
 	 */
 	protected function preprocessForm(JForm $form, $data, $group = 'content')
 	{
+		if ($this->canCreateCategory())
+		{
+			$form->setFieldAttribute('catid', 'allowAdd', 'true');
+		}
+
 		// Association content items
-		$app = JFactory::getApplication();
 		$assoc = JLanguageAssociations::isEnabled();
 
 		if ($assoc)
@@ -806,5 +809,17 @@ class ContentModelArticle extends JModelAdmin
 	public function hit()
 	{
 		return;
+	}
+
+	/**
+	 * Is the user allowed to create an on the fly category?
+	 *
+	 * @return  boolean
+	 *
+	 * @since   3.6.1
+	 */
+	private function canCreateCategory()
+	{
+		return JFactory::getUser()->authorise('core.create', 'com_content');
 	}
 }

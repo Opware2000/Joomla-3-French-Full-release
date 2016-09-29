@@ -100,7 +100,7 @@ class JViewCategory extends JViewLegacy
 	/**
 	 * Method with common display elements used in category list displays
 	 *
-	 * @return  void
+	 * @return  boolean|JException|void  Boolean false or JException instance on error, nothing otherwise
 	 *
 	 * @since   3.2
 	 */
@@ -112,10 +112,21 @@ class JViewCategory extends JViewLegacy
 
 		// Get some data from the models
 		$state      = $this->get('State');
-		$items      = $this->get('Items');
 		$category   = $this->get('Category');
 		$children   = $this->get('Children');
 		$parent     = $this->get('Parent');
+
+		if ($category == false)
+		{
+			throw new InvalidArgumentException(JText::_('JGLOBAL_CATEGORY_NOT_FOUND'), 404);
+		}
+
+		if ($parent == false)
+		{
+			throw new InvalidArgumentException(JText::_('JGLOBAL_CATEGORY_NOT_FOUND'), 404);
+		}
+
+		$items      = $this->get('Items');
 		$pagination = $this->get('Pagination');
 
 		// Check for errors.
@@ -126,22 +137,12 @@ class JViewCategory extends JViewLegacy
 			return false;
 		}
 
-		if ($category == false)
-		{
-			return JError::raiseError(404, JText::_('JGLOBAL_CATEGORY_NOT_FOUND'));
-		}
-
-		if ($parent == false)
-		{
-			return JError::raiseError(404, JText::_('JGLOBAL_CATEGORY_NOT_FOUND'));
-		}
-
 		// Check whether category access level allows access.
 		$groups = $user->getAuthorisedViewLevels();
 
 		if (!in_array($category->access, $groups))
 		{
-			return JError::raiseError(403, JText::_('JERROR_ALERTNOAUTHOR'));
+			throw new RuntimeException(JText::_('JERROR_ALERTNOAUTHOR'), 403);
 		}
 
 		// Setup the category parameters.
@@ -166,15 +167,24 @@ class JViewCategory extends JViewLegacy
 
 				JPluginHelper::importPlugin('content');
 
-				JFactory::getApplication()->triggerEvent('onContentPrepare', array ($this->extension . '.category', &$itemElement, &$itemElement->params, 0));
+				JFactory::getApplication()->triggerEvent('onContentPrepare', [$this->extension . '.category', &$itemElement, &$itemElement->params, 0]);
 
-				$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', array($this->extension . '.category', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent(
+					'onContentAfterTitle',
+					[$this->extension . '.category', &$itemElement, &$itemElement->core_params, 0]
+				);
 				$itemElement->event->afterDisplayTitle = trim(implode("\n", $results));
 
-				$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array($this->extension . '.category', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent(
+					'onContentBeforeDisplay',
+					[$this->extension . '.category', &$itemElement, &$itemElement->core_params, 0]
+				);
 				$itemElement->event->beforeDisplayContent = trim(implode("\n", $results));
 
-				$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array($this->extension . '.category', &$itemElement, &$itemElement->core_params, 0));
+				$results = JFactory::getApplication()->triggerEvent(
+					'onContentAfterDisplay',
+					[$this->extension . '.category', &$itemElement, &$itemElement->core_params, 0]
+				);
 				$itemElement->event->afterDisplayContent = trim(implode("\n", $results));
 
 				if ($itemElement->text)

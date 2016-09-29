@@ -11,6 +11,7 @@ defined('_JEXEC') or die;
 
 use Joomla\Registry\Registry;
 use Joomla\Session\SessionEvent;
+use Joomla\DI\Container;
 
 /**
  * Joomla! Installation Application class.
@@ -38,10 +39,10 @@ final class InstallationApplicationWeb extends JApplicationCms
 	public function __construct(JInput $input = null, Registry $config = null, JApplicationWebClient $client = null, Container $container = null)
 	{
 		// Register the application name.
-		$this->_name = 'installation';
+		$this->name = 'installation';
 
 		// Register the client ID.
-		$this->_clientId = 2;
+		$this->clientId = 2;
 
 		// Run the parent constructor.
 		parent::__construct($input, $config, $client, $container);
@@ -229,6 +230,35 @@ final class InstallationApplicationWeb extends JApplicationCms
 	}
 
 	/**
+	 * Execute the application.
+	 *
+	 * @return  void
+	 *
+	 * @since   4.0
+	 */
+	public function execute()
+	{
+		// Perform application routines.
+		$this->doExecute();
+
+		// If we have an application document object, render it.
+		if ($this->document instanceof JDocument)
+		{
+			// Render the application output.
+			$this->render();
+		}
+
+		// If gzip compression is enabled in configuration and the server is compliant, compress the output.
+		if ($this->get('gzip') && !ini_get('zlib.output_compression') && (ini_get('output_handler') != 'ob_gzhandler'))
+		{
+			$this->compress();
+		}
+
+		// Send the application response.
+		$this->respond();
+	}
+
+	/**
 	 * Method to load a PHP configuration class file based on convention and return the instantiated data object.  You
 	 * will extend this method in child classes to provide configuration data from whatever data source is relevant
 	 * for your specific application.
@@ -302,9 +332,9 @@ final class InstallationApplicationWeb extends JApplicationCms
 
 		$ret = array();
 
-		$ret['language'] = (string) $xml->forceLang;
-		$ret['helpurl'] = (string) $xml->helpurl;
-		$ret['debug'] = (string) $xml->debug;
+		$ret['language']   = (string) $xml->forceLang;
+		$ret['helpurl']    = (string) $xml->helpurl;
+		$ret['debug']      = (string) $xml->debug;
 		$ret['sampledata'] = (string) $xml->sampledata;
 
 		return $ret;
@@ -312,7 +342,7 @@ final class InstallationApplicationWeb extends JApplicationCms
 
 	/**
 	 * Returns the installed language files in the administrative and
-	 * front-end area.
+	 * frontend area.
 	 *
 	 * @param   mixed  $db  JDatabaseDriver instance.
 	 *
@@ -323,19 +353,20 @@ final class InstallationApplicationWeb extends JApplicationCms
 	public function getLocaliseAdmin($db = false)
 	{
 		// Read the files in the admin area.
-		$path = JLanguage::getLanguagePath(JPATH_ADMINISTRATOR);
+		$path               = JLanguage::getLanguagePath(JPATH_ADMINISTRATOR);
 		$langfiles['admin'] = JFolder::folders($path);
 
 		// Read the files in the site area.
-		$path = JLanguage::getLanguagePath(JPATH_SITE);
+		$path              = JLanguage::getLanguagePath(JPATH_SITE);
 		$langfiles['site'] = JFolder::folders($path);
 
 		if ($db)
 		{
-			$langfiles_disk = $langfiles;
-			$langfiles = array();
+			$langfiles_disk     = $langfiles;
+			$langfiles          = array();
 			$langfiles['admin'] = array();
-			$langfiles['site'] = array();
+			$langfiles['site']  = array();
+
 			$query = $db->getQuery(true)
 				->select($db->quoteName(array('element','client_id')))
 				->from($db->quoteName('#__extensions'))
@@ -457,7 +488,7 @@ final class InstallationApplicationWeb extends JApplicationCms
 		// Check for custom helpurl.
 		if (empty($forced['helpurl']))
 		{
-			$options['helpurl'] = 'https://help.joomla.org/proxy/index.php?option=com_help&amp;keyref=Help{major}{minor}:{keyref}';
+			$options['helpurl'] = 'https://help.joomla.org/proxy/index.php?keyref=Help{major}{minor}:{keyref}';
 		}
 		else
 		{
@@ -500,7 +531,7 @@ final class InstallationApplicationWeb extends JApplicationCms
 				'lineend' => 'unix',
 				'tab' => '  ',
 				'language' => $lang->getTag(),
-				'direction' => $lang->isRtl() ? 'rtl' : 'ltr'
+				'direction' => $lang->isRtl() ? 'rtl' : 'ltr',
 			);
 
 			$document = JDocument::getInstance($type, $attributes);
@@ -531,7 +562,7 @@ final class InstallationApplicationWeb extends JApplicationCms
 			'template' => 'template',
 			'file' => $file . '.php',
 			'directory' => JPATH_THEMES,
-			'params' => '{}'
+			'params' => '{}',
 		);
 
 		// Parse the document.

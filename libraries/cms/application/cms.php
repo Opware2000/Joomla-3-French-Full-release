@@ -9,6 +9,8 @@
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\Cms\Event\AbstractEvent;
+use Joomla\Cms\Event\BeforeExecuteEvent;
 use Joomla\DI\Container;
 use Joomla\DI\ContainerAwareInterface;
 use Joomla\DI\ContainerAwareTrait;
@@ -52,28 +54,25 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * The client identifier.
 	 *
 	 * @var    integer
-	 * @since  3.2
-	 * @deprecated  4.0  Will be renamed $clientId
+	 * @since  4.0
 	 */
-	protected $_clientId = null;
+	protected $clientId = null;
 
 	/**
 	 * The application message queue.
 	 *
 	 * @var    array
-	 * @since  3.2
-	 * @deprecated  4.0  Will be renamed $messageQueue
+	 * @since  4.0
 	 */
-	protected $_messageQueue = array();
+	protected $messageQueue = array();
 
 	/**
 	 * The name of the application.
 	 *
 	 * @var    array
-	 * @since  3.2
-	 * @deprecated  4.0  Will be renamed $name
+	 * @since  4.0
 	 */
-	protected $_name = null;
+	protected $name = null;
 
 	/**
 	 * The profiler instance
@@ -112,7 +111,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 		$container = $container ?: new Container;
 		$this->setContainer($container);
 
-		parent::__construct($input, $config, $client, $container);
+		parent::__construct($input, $config, $client);
 
 		// If JDEBUG is defined, load the profiler instance
 		if (defined('JDEBUG') && JDEBUG)
@@ -222,43 +221,29 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 		{
 			$handler = $this->get('session_handler', 'none');
 
-			if ($session->isNew())
-			{
-				// Default column/value set
-				$columns = array($db->quoteName('session_id'), $db->quoteName('client_id'));
-				$values  = array($db->quote($session->getId()), (int) $this->getClientId());
+			// Default column/value set
+			$columns = array(
+				$db->quoteName('session_id'),
+				$db->quoteName('client_id'),
+				$db->quoteName('guest'),
+				$db->quoteName('userid'),
+				$db->quoteName('username')
+			);
 
-				// If the database session handler is not in use, append the time to the row
-				if ($handler != 'database')
-				{
-					$columns[] = $db->quoteName('time');
-					$values[]  = (int) time();
-				}
-			}
-			else
-			{
-				// Default column/value set
-				$columns = array(
-					$db->quoteName('session_id'),
-					$db->quoteName('client_id'),
-					$db->quoteName('guest'),
-					$db->quoteName('userid'),
-					$db->quoteName('username')
-				);
-				$values = array(
-					$db->quote($session->getId()),
-					(int) $this->getClientId(),
-					(int) $user->guest,
-					(int) $user->id,
-					$db->quote($user->username)
-				);
+			$values = array(
+				$db->quote($session->getId()),
+				(int) $this->getClientId(),
+				(int) $user->guest,
+				(int) $user->id,
+				$db->quote($user->username)
+			);
 
-				// If the database session handler is not in use, append the time to the row
-				if ($handler != 'database')
-				{
-					$columns[] = $db->quoteName('time');
-					$values[]  = (int) $session->get('session.timer.start');
-				}
+			// If the database session handler is not in use, append the time to the row
+			if ($handler != 'database')
+			{
+				$columns[] = $db->quoteName('time');
+				$time = $session->isNew() ? time() : $session->get('session.timer.start');
+				$values[]  = (int) $time;
 			}
 
 			// If the insert failed, exit the application.
@@ -301,10 +286,10 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 
 		$message = array('message' => $msg, 'type' => strtolower($type));
 
-		if (!in_array($message, $this->_messageQueue))
+		if (!in_array($message, $this->messageQueue))
 		{
 			// Enqueue the message.
-			$this->_messageQueue[] = $message;
+			$this->messageQueue[] = $message;
 		}
 	}
 
@@ -317,6 +302,23 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	public function execute()
 	{
+		JPluginHelper::importPlugin('system');
+
+		// Trigger the onBeforeExecute event.
+		$this->triggerEvent(
+			'onBeforeExecute',
+			AbstractEvent::create(
+				'onBeforeExecute',
+				[
+					'subject'    => $this,
+					'eventClass' => BeforeExecuteEvent::class,
+				]
+			)
+		);
+
+		// Mark beforeExecute in the profiler.
+		JDEBUG ? $this->profiler->mark('beforeExecute event dispatched') : null;
+
 		// Perform application routines.
 		$this->doExecute();
 
@@ -422,7 +424,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * @return  mixed  The user state.
 	 *
 	 * @since   3.2
-	 * @deprecated  4.0  Use get() instead
+	 * @deprecated  5.0  Use get() instead
 	 */
 	public function getCfg($varname, $default = null)
 	{
@@ -438,7 +440,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	public function getClientId()
 	{
-		return $this->_clientId;
+		return $this->clientId;
 	}
 
 	/**
@@ -473,7 +475,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			}
 			else
 			{
-				// TODO - This creates an implicit hard requirement on the JApplicationCms constructor... If we ever get around to "true" DI, this'll go away anyway
+				// TODO - This creates an implicit hard requirement on the JApplicationCms constructor
 				static::$instances[$name] = new $classname(null, null, null, $container);
 			}
 		}
@@ -487,7 +489,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * @param   string  $name     The name of the application/client.
 	 * @param   array   $options  An optional associative array of configuration settings.
 	 *
-	 * @return  JMenu|null
+	 * @return  JMenu
 	 *
 	 * @since   3.2
 	 */
@@ -504,16 +506,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			$options['app'] = $this;
 		}
 
-		try
-		{
-			$menu = JMenu::getInstance($name, $options);
-		}
-		catch (Exception $e)
-		{
-			return null;
-		}
-
-		return $menu;
+		return JMenu::getInstance($name, $options);
 	}
 
 	/**
@@ -526,19 +519,18 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	public function getMessageQueue()
 	{
 		// For empty queue, if messages exists in the session, enqueue them.
-		if (!count($this->_messageQueue))
+		if (!count($this->messageQueue))
 		{
-			$session = JFactory::getSession();
-			$sessionQueue = $session->get('application.queue');
+			$sessionQueue = $this->getSession()->get('application.queue');
 
 			if (count($sessionQueue))
 			{
 				$this->_messageQueue = $sessionQueue;
-				$session->set('application.queue', null);
+				$this->getSession()->set('application.queue', null);
 			}
 		}
 
-		return $this->_messageQueue;
+		return $this->messageQueue;
 	}
 
 	/**
@@ -550,7 +542,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	public function getName()
 	{
-		return $this->_name;
+		return $this->name;
 	}
 
 	/**
@@ -559,7 +551,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * @param   string  $name     The name of the application.
 	 * @param   array   $options  An optional associative array of configuration settings.
 	 *
-	 * @return  JPathway|null
+	 * @return  JPathway
 	 *
 	 * @since   3.2
 	 */
@@ -570,16 +562,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			$name = $this->getName();
 		}
 
-		try
-		{
-			$pathway = JPathway::getInstance($name, $options);
-		}
-		catch (Exception $e)
-		{
-			return null;
-		}
-
-		return $pathway;
+		return JPathway::getInstance($name, $options);
 	}
 
 	/**
@@ -588,7 +571,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * @param   string  $name     The name of the application.
 	 * @param   array   $options  An optional associative array of configuration settings.
 	 *
-	 * @return  JRouter|null
+	 * @return  JRouter
 	 *
 	 * @since   3.2
 	 */
@@ -600,16 +583,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			$name = $app->getName();
 		}
 
-		try
-		{
-			$router = JRouter::getInstance($name, $options);
-		}
-		catch (Exception $e)
-		{
-			return null;
-		}
-
-		return $router;
+		return JRouter::getInstance($name, $options);
 	}
 
 	/**
@@ -698,9 +672,6 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	protected function initialiseApp($options = array())
 	{
-		// Set the configuration in the API.
-		$this->config = JFactory::getConfig();
-
 		// Check that we were given a language in the array (since by default may be blank).
 		if (isset($options['language']))
 		{
@@ -715,6 +686,9 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 
 		// Register the language object with JFactory
 		JFactory::$language = $this->getLanguage();
+
+		// Load the library language files
+		$this->loadLibraryLanguage();
 
 		// Set user specific editor.
 		$user = JFactory::getUser();
@@ -749,7 +723,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	public function isAdmin()
 	{
-		return ($this->getClientId() === 1);
+		return $this->getClientId() === 1;
 	}
 
 	/**
@@ -761,7 +735,19 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 */
 	public function isSite()
 	{
-		return ($this->getClientId() === 0);
+		return $this->getClientId() === 0;
+	}
+
+	/**
+	 * Load the library language files for the application
+	 *
+	 * @return  void
+	 *
+	 * @since   3.6.3
+	 */
+	protected function loadLibraryLanguage()
+	{
+		$this->getLanguage()->load('lib_joomla', JPATH_ADMINISTRATOR);
 	}
 
 	/**
@@ -779,7 +765,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 	 * @param   array  $credentials  Array('username' => string, 'password' => string)
 	 * @param   array  $options      Array('remember' => boolean)
 	 *
-	 * @return  boolean  True on success.
+	 * @return  boolean|JException  True on success, false if failed or silent handling is configured, or a JException object on authentication error.
 	 *
 	 * @since   3.2
 	 */
@@ -801,12 +787,11 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			 * This permits authentication plugins blocking the user.
 			 */
 			$authorisations = $authenticate->authorise($response, $options);
+			$denied_states = JAuthentication::STATUS_EXPIRED | JAuthentication::STATUS_DENIED;
 
 			foreach ($authorisations as $authorisation)
 			{
-				$denied_states = array(JAuthentication::STATUS_EXPIRED, JAuthentication::STATUS_DENIED);
-
-				if (in_array($authorisation->status, $denied_states))
+				if ((int) $authorisation->status & $denied_states)
 				{
 					// Trigger onUserAuthorisationFailure Event.
 					$this->triggerEvent('onUserAuthorisationFailure', array((array) $authorisation));
@@ -823,17 +808,11 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 						case JAuthentication::STATUS_EXPIRED:
 							return JError::raiseWarning('102002', JText::_('JLIB_LOGIN_EXPIRED'));
 
-							break;
-
 						case JAuthentication::STATUS_DENIED:
 							return JError::raiseWarning('102003', JText::_('JLIB_LOGIN_DENIED'));
 
-							break;
-
 						default:
 							return JError::raiseWarning('102004', JText::_('JLIB_LOGIN_AUTHORISATION'));
-
-							break;
 					}
 				}
 			}
@@ -998,10 +977,9 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 		}
 
 		// Persist messages if they exist.
-		if (count($this->_messageQueue))
+		if (count($this->messageQueue))
 		{
-			$session = JFactory::getSession();
-			$session->set('application.queue', $this->_messageQueue);
+			$this->getSession()->set('application.queue', $this->messageQueue);
 		}
 
 		// Hand over processing to the parent now
@@ -1111,7 +1089,7 @@ class JApplicationCms extends JApplicationWeb implements ContainerAwareInterface
 			return $registry->set($key, $value);
 		}
 
-		return null;
+		return;
 	}
 
 	/**

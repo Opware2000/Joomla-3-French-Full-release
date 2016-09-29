@@ -9,10 +9,11 @@
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\Utilities\ArrayHelper;
+
 jimport('joomla.environment.browser');
 jimport('joomla.filesystem.file');
 jimport('joomla.filesystem.path');
-jimport('joomla.utilities.arrayhelper');
 
 /**
  * Utility class for all HTML drawing classes
@@ -127,44 +128,37 @@ abstract class JHtml
 
 		$toCall = array($className, $func);
 
-		if (is_callable($toCall))
-		{
-			static::register($key, $toCall);
-			$args = func_get_args();
-
-			// Remove function name from arguments
-			array_shift($args);
-
-			return static::call($toCall, $args);
-		}
-		else
+		if (!is_callable($toCall))
 		{
 			throw new InvalidArgumentException(sprintf('%s::%s not found.', $className, $func), 500);
 		}
+
+		static::register($key, $toCall);
+		$args = func_get_args();
+
+		// Remove function name from arguments
+		array_shift($args);
+
+		return static::call($toCall, $args);
 	}
 
 	/**
 	 * Registers a function to be called with a specific key
 	 *
-	 * @param   string  $key       The name of the key
-	 * @param   string  $function  Function or method
+	 * @param   string    $key       The name of the key
+	 * @param   callable  $function  Function or method
 	 *
 	 * @return  boolean  True if the function is callable
 	 *
 	 * @since   1.6
 	 */
-	public static function register($key, $function)
+	public static function register($key, callable $function)
 	{
 		list($key) = static::extract($key);
 
-		if (is_callable($function))
-		{
-			static::$registry[$key] = $function;
+		static::$registry[$key] = $function;
 
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	/**
@@ -218,13 +212,8 @@ abstract class JHtml
 	 * @since   1.6
 	 * @throws  InvalidArgumentException
 	 */
-	protected static function call($function, $args)
+	protected static function call(callable $function, $args)
 	{
-		if (!is_callable($function))
-		{
-			throw new InvalidArgumentException('Function not supported', 500);
-		}
-
 		// PHP 5.3 workaround
 		$temp = array();
 
@@ -251,7 +240,7 @@ abstract class JHtml
 	{
 		if (is_array($attribs))
 		{
-			$attribs = JArrayHelper::toString($attribs);
+			$attribs = ArrayHelper::toString($attribs);
 		}
 
 		return '<a href="' . $url . '" ' . $attribs . '>' . $text . '</a>';
@@ -273,7 +262,7 @@ abstract class JHtml
 	{
 		if (is_array($attribs))
 		{
-			$attribs = JArrayHelper::toString($attribs);
+			$attribs = ArrayHelper::toString($attribs);
 		}
 
 		return '<iframe src="' . $url . '" ' . $attribs . ' name="' . $name . '">' . $noFrames . '</iframe>';
@@ -319,8 +308,12 @@ abstract class JHtml
 
 				// Try to include files named filename.ext, filename_browser.ext, filename_browser_major.ext, filename_browser_major_minor.ext
 				// where major and minor are the browser version names
-				$potential = array($strip, $strip . '_' . $browser,  $strip . '_' . $browser . '_' . $major,
-					$strip . '_' . $browser . '_' . $major . '_' . $minor);
+				$potential = array(
+					$strip,
+					$strip . '_' . $browser,
+					$strip . '_' . $browser . '_' . $major,
+					$strip . '_' . $browser . '_' . $major . '_' . $minor,
+				);
 			}
 			else
 			{
@@ -578,7 +571,7 @@ abstract class JHtml
 		else
 		{
 			return '<img src="' . $file . '" alt="' . $alt . '" '
-			. trim((is_array($attribs) ? JArrayHelper::toString($attribs) : $attribs) . ' /')
+			. trim((is_array($attribs) ? ArrayHelper::toString($attribs) : $attribs) . ' /')
 			. '>';
 		}
 	}
@@ -630,7 +623,7 @@ abstract class JHtml
 		{
 			if (count($includes) == 0)
 			{
-				return null;
+				return;
 			}
 			elseif (count($includes) == 1)
 			{
@@ -683,7 +676,7 @@ abstract class JHtml
 		{
 			if (count($includes) == 0)
 			{
-				return null;
+				return;
 			}
 			elseif (count($includes) == 1)
 			{
@@ -876,7 +869,7 @@ abstract class JHtml
 	}
 
 	/**
-	 * Converts a double colon seperated string or 2 separate strings to a string ready for bootstrap tooltips
+	 * Converts a double colon separated string or 2 separate strings to a string ready for bootstrap tooltips
 	 *
 	 * @param   string  $title      The title of the tooltip (or combined '::' separated string).
 	 * @param   string  $content    The content to tooltip.
@@ -968,7 +961,7 @@ abstract class JHtml
 			$attribs['class'] = isset($attribs['class']) ? $attribs['class'] : 'input-medium';
 			$attribs['class'] = trim($attribs['class'] . ' hasTooltip');
 
-			$attribs = JArrayHelper::toString($attribs);
+			$attribs = ArrayHelper::toString($attribs);
 		}
 
 		static::_('bootstrap.tooltip');

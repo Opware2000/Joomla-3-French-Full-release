@@ -75,13 +75,16 @@ class PlgUserProfile extends JPlugin
 				// Load the profile data from the database.
 				$db = JFactory::getDbo();
 				$query = $db->getQuery(true)
-					->select(array(
-						$db->qn('profile_key'),
-						$db->qn('profile_value'),
-					))->from('#__user_profiles')
-				->where($db->qn('user_id') . ' = ' . $db->q((int) $userId))
-				->where($db->qn('profile_key') . ' LIKE ' . $db->qn('profile.%'))
-				->order($db->qn('ordering'));
+					->select(
+						array(
+							$db->qn('profile_key'),
+							$db->qn('profile_value'),
+						)
+					)
+					->from('#__user_profiles')
+					->where($db->qn('user_id') . ' = ' . $db->q((int) $userId))
+					->where($db->qn('profile_key') . ' LIKE ' . $db->qn('profile.%'))
+					->order($db->qn('ordering'));
 
 				$db->setQuery($query);
 				$results = $db->loadRowList();
@@ -253,7 +256,7 @@ class PlgUserProfile extends JPlugin
 			'tos',
 		);
 
-		// Change fields description when displayed in front-end or back-end profile editing
+		// Change fields description when displayed in frontend or backend profile editing
 		$app = JFactory::getApplication();
 
 		if ($app->isSite() || $name == 'com_users.user' || $name == 'com_admin.profile')

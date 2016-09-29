@@ -45,8 +45,6 @@ class JErrorPage
 					$app->redirect('index.php');
 				}
 
-				$app      = JFactory::getApplication();
-
 				/*
 				 * Try and determine the format to render the error page in
 				 *

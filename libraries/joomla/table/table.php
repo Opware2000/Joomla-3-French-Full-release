@@ -135,7 +135,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 	 *
 	 * @since   11.1
 	 */
-	public function __construct($table, $key, $db, DispatcherInterface $dispatcher = null)
+	public function __construct($table, $key, JDatabaseDriver $db, DispatcherInterface $dispatcher = null)
 	{
 		parent::__construct();
 
@@ -281,8 +281,12 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 
 			if (!class_exists($tableClass))
 			{
-				// If we were unable to find the class file in the JTable include paths, raise a warning and return false.
-				JLog::add(JText::sprintf('JLIB_DATABASE_ERROR_NOT_SUPPORTED_FILE_NOT_FOUND', $type), JLog::WARNING, 'jerror');
+				/*
+				* If unable to find the class file in the JTable include paths. Return false.
+				* The warning JLIB_DATABASE_ERROR_NOT_SUPPORTED_FILE_NOT_FOUND has been removed in 3.6.3.
+				* In 4.0 an Exception (type to be determined) will be thrown.
+				* For more info see https://github.com/joomla/joomla-cms/issues/11570
+				*/
 
 				return false;
 			}
@@ -516,7 +520,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 	 *
 	 * @since   11.1
 	 */
-	public function setDbo($db)
+	public function setDbo(JDatabaseDriver $db)
 	{
 		$this->_db = $db;
 
@@ -1038,7 +1042,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		{
 			$pk = array();
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				$pk[$key] = $this->$key;
 			}
@@ -1048,7 +1052,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 			$pk = array($this->_tbl_key => $pk);
 		}
 
-		foreach ($this->_tbl_keys AS $key)
+		foreach ($this->_tbl_keys as $key)
 		{
 			$pk[$key] = is_null($pk[$key]) ? $this->$key : $pk[$key];
 
@@ -1152,7 +1156,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		{
 			$pk = array();
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				$pk[$key] = $this->$key;
 			}
@@ -1162,7 +1166,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 			$pk = array($this->_tbl_key => $pk);
 		}
 
-		foreach ($this->_tbl_keys AS $key)
+		foreach ($this->_tbl_keys as $key)
 		{
 			$pk[$key] = is_null($pk[$key]) ? $this->$key : $pk[$key];
 
@@ -1239,7 +1243,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		{
 			$pk = array();
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				$pk[$this->$key] = $this->$key;
 			}
@@ -1249,7 +1253,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 			$pk = array($this->_tbl_key => $pk);
 		}
 
-		foreach ($this->_tbl_keys AS $key)
+		foreach ($this->_tbl_keys as $key)
 		{
 			$pk[$key] = empty($pk[$key]) ? $this->$key : $pk[$key];
 
@@ -1362,7 +1366,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		{
 			$pk = array();
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				$pk[$key] = $this->$key;
 			}
@@ -1372,7 +1376,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 			$pk = array($this->_tbl_key => $pk);
 		}
 
-		foreach ($this->_tbl_keys AS $key)
+		foreach ($this->_tbl_keys as $key)
 		{
 			$pk[$key] = is_null($pk[$key]) ? $this->$key : $pk[$key];
 
@@ -1479,7 +1483,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		$max = (int) $this->_db->loadResult();
 
 		// Return the largest ordering value + 1.
-		return ($max + 1);
+		return $max + 1;
 	}
 
 	/**
@@ -1758,7 +1762,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 		{
 			$pk = array();
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				if ($this->$key)
 				{
@@ -1829,7 +1833,7 @@ abstract class JTable extends JObject implements JTableInterface, DispatcherAwar
 			// If the JTable instance value is in the list of primary keys that were set, set the instance.
 			$ours = true;
 
-			foreach ($this->_tbl_keys AS $key)
+			foreach ($this->_tbl_keys as $key)
 			{
 				if ($this->$key != $pk[$key])
 				{

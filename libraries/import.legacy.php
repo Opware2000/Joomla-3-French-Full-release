@@ -45,12 +45,6 @@ if (!defined('IS_MAC'))
 	define('IS_MAC', (IS_UNIX === true && ($os === 'DAR' || $os === 'MAC')) ? true : false);
 }
 
-// Import the platform version library if necessary.
-if (!class_exists('JPlatform'))
-{
-	require_once JPATH_PLATFORM . '/platform.php';
-}
-
 // Import the library loader if necessary.
 if (!class_exists('JLoader'))
 {
@@ -91,10 +85,3 @@ JLoader::register('PasswordHash', JPATH_PLATFORM . '/phpass/PasswordHash.php');
 JLoader::register('JSimpleCrypt', JPATH_PLATFORM . '/legacy/simplecrypt/simplecrypt.php');
 JLoader::register('JTree', JPATH_PLATFORM . '/legacy/base/tree.php');
 JLoader::register('JNode', JPATH_PLATFORM . '/legacy/base/node.php');
-JLoader::register('LogException', JPATH_PLATFORM . '/legacy/log/logexception.php');
-JLoader::register('JXMLElement', JPATH_PLATFORM . '/legacy/utilities/xmlelement.php');
-JLoader::register('JRule', JPATH_PLATFORM . '/legacy/access/rule.php');
-JLoader::register('JRules', JPATH_PLATFORM . '/legacy/access/rules.php');
-JLoader::register('JCli', JPATH_PLATFORM . '/legacy/application/cli.php');
-JLoader::register('JDaemon', JPATH_PLATFORM . '/legacy/application/daemon.php');
-JLoader::register('JApplication', JPATH_LIBRARIES . '/legacy/application/application.php');

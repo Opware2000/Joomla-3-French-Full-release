@@ -55,6 +55,7 @@ class JCacheStorageRedis extends JCacheStorage
 	 * @return  Redis|boolean  Redis connection object on success, boolean on failure
 	 *
 	 * @since   3.4
+	 * @note    As of 4.0 this method will throw a JCacheExceptionConnecting object on connection failure
 	 */
 	protected function getConnection()
 	{
@@ -72,7 +73,7 @@ class JCacheStorageRedis extends JCacheStorage
 			'host' => $config->get('redis_server_host', 'localhost'),
 			'port' => $config->get('redis_server_port', 6379),
 			'auth' => $config->get('redis_server_auth', null),
-			'db'   => (int) $config->get('redis_server_db', null)
+			'db'   => (int) $config->get('redis_server_db', null),
 		);
 
 		static::$_redis = new Redis;
@@ -106,22 +107,14 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			if ($app->isAdmin())
-			{
-				JError::raiseWarning(500, 'Redis connection failed');
-			}
-
-			return false;
+			throw new JCacheExceptionConnecting('Redis connection failed', 500);
 		}
 
 		if ($auth == false)
 		{
-			if ($app->isAdmin())
-			{
-				JError::raiseWarning(500, 'Redis authentication failed');
-			}
+			static::$_redis = null;
 
-			return false;
+			throw new JCacheExceptionConnecting('Redis authentication failed', 500);
 		}
 
 		$select = static::$_redis->select($server['db']);
@@ -130,12 +123,7 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			if ($app->isAdmin())
-			{
-				JError::raiseWarning(500, 'Redis failed to select database');
-			}
-
-			return false;
+			throw new JCacheExceptionConnecting('Redis failed to select database', 500);
 		}
 
 		try
@@ -146,12 +134,7 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			if ($app->isAdmin())
-			{
-				JError::raiseWarning(500, 'Redis ping failed');
-			}
-
-			return false;
+			throw new JCacheExceptionConnecting('Redis ping failed', 500);
 		}
 
 		return static::$_redis;

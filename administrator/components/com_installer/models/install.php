@@ -192,7 +192,7 @@ class InstallerModelInstall extends JModelLegacy
 		}
 		else
 		{
-			// Package installed sucessfully.
+			// Package installed successfully.
 			$msg = JText::sprintf('COM_INSTALLER_INSTALL_SUCCESS', JText::_('COM_INSTALLER_TYPE_TYPE_' . strtoupper($package['type'])));
 			$result = true;
 			$msgType = 'message';

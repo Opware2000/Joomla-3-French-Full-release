@@ -21,7 +21,7 @@ use Joomla\Registry\Registry;
  * @see    https://secure.php.net/manual/en/features.commandline.php
  * @since  11.1
  */
-class JApplicationDaemon extends JApplicationCli
+abstract class JApplicationDaemon extends JApplicationCli
 {
 	/**
 	 * @var    array  The available POSIX signals to be caught by default.
@@ -64,7 +64,7 @@ class JApplicationDaemon extends JApplicationCli
 		'SIGBABY',
 		'SIG_BLOCK',
 		'SIG_UNBLOCK',
-		'SIG_SETMASK'
+		'SIG_SETMASK',
 	);
 
 	/**
@@ -127,7 +127,7 @@ class JApplicationDaemon extends JApplicationCli
 		// @codeCoverageIgnoreEnd
 
 		// Call the parent constructor.
-		parent::__construct($input, $config, $dispatcher);
+		parent::__construct($input, $config, null, null, $dispatcher);
 
 		// Set some system limits.
 		@set_time_limit($this->config->get('max_execution_time', 0));
@@ -889,7 +889,7 @@ class JApplicationDaemon extends JApplicationCli
 	 * @see     pcntl_signal()
 	 * @since   11.3
 	 */
-	protected function pcntlSignal($signal , $handler, $restart = true)
+	protected function pcntlSignal($signal, $handler, $restart = true)
 	{
 		return pcntl_signal($signal, $handler, $restart);
 	}

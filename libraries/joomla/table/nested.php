@@ -12,6 +12,7 @@ defined('JPATH_PLATFORM') or die;
 use Joomla\Event\Dispatcher;
 use Joomla\Event\Event;
 use Joomla\Cms\Event\AbstractEvent;
+use Joomla\Utilities\ArrayHelper;
 
 /**
  * Table class supporting modified pre-order tree traversal behavior.
@@ -197,11 +198,11 @@ class JTableNested extends JTable
 		if (empty($node))
 		{
 			// Error message set in getNode method.
-			return null;
+			return;
 		}
 
 		// The node is a leaf node.
-		return (($node->rgt - $node->lft) == 1);
+		return ($node->rgt - $node->lft) == 1;
 	}
 
 	/**
@@ -926,7 +927,7 @@ class JTableNested extends JTable
 		$query = $this->_db->getQuery(true);
 
 		// Sanitize input.
-		JArrayHelper::toInteger($pks);
+		$pks = ArrayHelper::toInteger($pks);
 		$userId = (int) $userId;
 		$state = (int) $state;
 

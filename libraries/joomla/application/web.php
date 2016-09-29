@@ -9,6 +9,8 @@
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\Cms\Application\Autoconfigurable;
+use Joomla\Event\DispatcherInterface;
 use Joomla\Registry\Registry;
 use Joomla\Session\SessionInterface;
 use Joomla\String\StringHelper;
@@ -20,6 +22,8 @@ use Joomla\String\StringHelper;
  */
 class JApplicationWeb extends JApplicationBase
 {
+	use Autoconfigurable;
+
 	/**
 	 * @var    string  Character encoding string.
 	 * @since  11.3
@@ -57,7 +61,7 @@ class JApplicationWeb extends JApplicationBase
 	protected $language;
 
 	/**
-	 * @var    JSession  The application session object.
+	 * @var    SessionInterface  The application session object.
 	 * @since  11.3
 	 */
 	protected $session;
@@ -90,7 +94,7 @@ class JApplicationWeb extends JApplicationBase
 		305 => 'HTTP/1.1 305 Use Proxy',
 		306 => 'HTTP/1.1 306 (Unused)',
 		307 => 'HTTP/1.1 307 Temporary Redirect',
-		308 => 'HTTP/1.1 308 Permanent Redirect'
+		308 => 'HTTP/1.1 308 Permanent Redirect',
 	);
 
 	/**
@@ -226,7 +230,7 @@ class JApplicationWeb extends JApplicationBase
 		// Create the session based on the application logic.
 		if ($session !== false)
 		{
-			$this->loadSession($session);
+			$this->setSession($session);
 		}
 
 		// Create the document based on the application logic.
@@ -241,7 +245,10 @@ class JApplicationWeb extends JApplicationBase
 			$this->loadLanguage($language);
 		}
 
-		$this->setDispatcher($dispatcher);
+		if ($dispatcher)
+		{
+			$this->setDispatcher($dispatcher);
+		}
 
 		return $this;
 	}
@@ -294,21 +301,6 @@ class JApplicationWeb extends JApplicationBase
 	}
 
 	/**
-	 * Method to run the Web application routines.  Most likely you will want to instantiate a controller
-	 * and execute it, or perform some sort of action that populates a JDocument object so that output
-	 * can be rendered to the client.
-	 *
-	 * @return  void
-	 *
-	 * @codeCoverageIgnore
-	 * @since   11.3
-	 */
-	protected function doExecute()
-	{
-		// Your application routines go here.
-	}
-
-	/**
 	 * Rendering is the process of pushing the document buffers into the template
 	 * placeholders, retrieving data from the document and pushing it into
 	 * the application response buffer.
@@ -323,7 +315,7 @@ class JApplicationWeb extends JApplicationBase
 		$options = array(
 			'template' => $this->get('theme'),
 			'file' => $this->get('themeFile', 'index.php'),
-			'params' => $this->get('themeParams')
+			'params' => $this->get('themeParams'),
 		);
 
 		if ($this->get('themes.base'))
@@ -360,7 +352,7 @@ class JApplicationWeb extends JApplicationBase
 		$supported = array(
 			'x-gzip' => 'gz',
 			'gzip' => 'gz',
-			'deflate' => 'deflate'
+			'deflate' => 'deflate',
 		);
 
 		// Get the supported encoding.
@@ -561,30 +553,6 @@ class JApplicationWeb extends JApplicationBase
 
 		// Close the application after the redirect.
 		$this->close();
-	}
-
-	/**
-	 * Load an object or array into the application configuration object.
-	 *
-	 * @param   mixed  $data  Either an array or object to be loaded into the configuration object.
-	 *
-	 * @return  JApplicationWeb  Instance of $this to allow chaining.
-	 *
-	 * @since   11.3
-	 */
-	public function loadConfiguration($data)
-	{
-		// Load the data into the configuration object.
-		if (is_array($data))
-		{
-			$this->config->loadArray($data);
-		}
-		elseif (is_object($data))
-		{
-			$this->config->loadObject($data);
-		}
-
-		return $this;
 	}
 
 	/**
@@ -817,7 +785,7 @@ class JApplicationWeb extends JApplicationBase
 	 */
 	protected function checkConnectionAlive()
 	{
-		return (connection_status() === CONNECTION_NORMAL);
+		return connection_status() === CONNECTION_NORMAL;
 	}
 
 	/**
@@ -885,54 +853,6 @@ class JApplicationWeb extends JApplicationBase
 	}
 
 	/**
-	 * Method to load a PHP configuration class file based on convention and return the instantiated data object.  You
-	 * will extend this method in child classes to provide configuration data from whatever data source is relevant
-	 * for your specific application.
-	 *
-	 * @param   string  $file   The path and filename of the configuration file. If not provided, configuration.php
-	 *                          in JPATH_BASE will be used.
-	 * @param   string  $class  The class name to instantiate.
-	 *
-	 * @return  mixed   Either an array or object to be loaded into the configuration object.
-	 *
-	 * @since   11.3
-	 * @throws  RuntimeException
-	 */
-	protected function fetchConfigurationData($file = '', $class = 'JConfig')
-	{
-		// Instantiate variables.
-		$config = array();
-
-		if (empty($file) && defined('JPATH_ROOT'))
-		{
-			$file = JPATH_ROOT . '/configuration.php';
-
-			// Applications can choose not to have any configuration data
-			// by not implementing this method and not having a config file.
-			if (!file_exists($file))
-			{
-				$file = '';
-			}
-		}
-
-		if (!empty($file))
-		{
-			JLoader::register($class, $file);
-
-			if (class_exists($class))
-			{
-				$config = new $class;
-			}
-			else
-			{
-				throw new RuntimeException('Configuration class does not exist.');
-			}
-		}
-
-		return $config;
-	}
-
-	/**
 	 * Flush the media version to refresh versionable assets
 	 *
 	 * @return  void
@@ -976,7 +896,7 @@ class JApplicationWeb extends JApplicationBase
 	 */
 	public function isSSLConnection()
 	{
-		return ((isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on')) || getenv('SSL_PROTOCOL_VERSION'));
+		return (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on')) || getenv('SSL_PROTOCOL_VERSION');
 	}
 
 	/**
@@ -1054,7 +974,7 @@ class JApplicationWeb extends JApplicationBase
 		$this->session = $session;
 
 		return $this;
-  	}
+	}
 
 	/**
 	 * Method to load the system URI strings for the application.

@@ -177,7 +177,7 @@ class ConfigModelComponent extends ConfigModelForm
 			throw new RuntimeException($table->getError());
 		}
 
-		$result = JFactory::getApplication()->triggerEvent('onExtensionBeforeSave', array($context, &$table, false));
+		$result = JFactory::getApplication()->triggerEvent('onExtensionBeforeSave', array($context, $table, false));
 
 			// Store the data.
 		if (in_array(false, $result, true) || !$table->store())
@@ -185,8 +185,7 @@ class ConfigModelComponent extends ConfigModelForm
 			throw new RuntimeException($table->getError());
 		}
 
-		// Trigger the after save event.
-		JFactory::getApplication()->triggerEvent('onExtensionAfterSave', array($context, &$table, false));
+		JFactory::getApplication()->triggerEvent('onExtensionAfterSave', array($context, $table, false));
 
 		// Clean the component cache.
 		$this->cleanCache('_system', 0);

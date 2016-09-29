@@ -224,7 +224,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$this->parent->pushStep(
 				array(
 					'type' => 'folder',
-					'path' => $this->parent->getPath('extension_site')
+					'path' => $this->parent->getPath('extension_site'),
 				)
 			);
 		}
@@ -255,7 +255,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$this->parent->pushStep(
 				array(
 					'type' => 'folder',
-					'path' => $this->parent->getPath('extension_administrator')
+					'path' => $this->parent->getPath('extension_administrator'),
 				)
 			);
 		}
@@ -279,7 +279,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			array(
 				'element'   => $this->element,
 				'type'      => $this->extension->type,
-				'client_id' => 1
+				'client_id' => 1,
 			)
 		);
 
@@ -661,7 +661,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 *
 	 * @param   integer  $id  The unique extension id of the component to uninstall
 	 *
-	 * @return  mixed  Return value for uninstall method in component uninstall file
+	 * @return  boolean  True on success
 	 *
 	 * @since   3.1
 	 */
@@ -726,8 +726,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Set the extensions name
-		$this->set('name', $this->getName());
-		$this->set('element', $this->getElement());
+		$this->name = $this->getName();
+		$this->element = $this->getElement();
 
 		// Attempt to load the admin language file; might have uninstall strings
 		$this->loadLanguage(JPATH_ADMINISTRATOR . '/components/' . $this->element);
@@ -804,6 +804,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$db->setQuery($query);
 		$db->execute();
 
+		// Rebuild the categories for correct lft/rgt
+		$category = JTable::getInstance('category');
+		$category->rebuild();
+
 		// Clobber any possible pending updates
 		$update = JTable::getInstance('update');
 		$uid = $update->find(
@@ -811,7 +815,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				'element'   => $this->extension->element,
 				'type'      => 'component',
 				'client_id' => 1,
-				'folder'    => ''
+				'folder'    => '',
 			)
 		);
 
@@ -870,7 +874,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	{
 		$db     = $this->parent->getDbo();
 
-		$option = $this->get('element');
+		$option = $this->element;
 
 		// If a component exists with this option in the table then we don't need to add menus
 		$query = $db->getQuery(true)
@@ -1104,7 +1108,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			{
 				if (!$table->delete((int) $menuid))
 				{
-					$this->setError($table->getError());
+					JError::raiseWarning(1, $table->getError());
 
 					$result = false;
 				}
@@ -1129,7 +1133,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	protected function _updateSiteMenus($component_id = null)
 	{
 		$db     = $this->parent->getDbo();
-		$option = $this->get('element');
+		$option = $this->element;
 
 		// Update all menu items which contain 'index.php?option=com_extension' or 'index.php?option=com_extension&...'
 		// to use the new component id.
@@ -1284,7 +1288,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			return false;
 		}
 
-		if ( !$table->bind($data) || !$table->check() || !$table->store())
+		if (!$table->bind($data) || !$table->check() || !$table->store())
 		{
 			// The menu item already exists. Delete it and retry instead of throwing an error.
 			$query = $db->getQuery(true)
@@ -1300,7 +1304,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$db->setQuery($query);
 			$menu_id = $db->loadResult();
 
-			if ( !$menu_id)
+			if (!$menu_id)
 			{
 				// Oops! Could not get the menu ID. Go back and rollback changes.
 				JError::raiseWarning(1, $table->getError());
@@ -1317,7 +1321,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				// Retry creating the menu item
 				$table->setLocation($parentId, 'last-child');
 
-				if ( !$table->bind($data) || !$table->check() || !$table->store())
+				if (!$table->bind($data) || !$table->check() || !$table->store())
 				{
 					// Install failed, warn user and rollback changes
 					JError::raiseWarning(1, $table->getError());
@@ -1329,15 +1333,4 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		return $table->id;
 	}
-}
-
-/**
- * Deprecated class placeholder. You should use JInstallerAdapterComponent instead.
- *
- * @since       3.1
- * @deprecated  4.0
- * @codeCoverageIgnore
- */
-class JInstallerComponent extends JInstallerAdapterComponent
-{
 }

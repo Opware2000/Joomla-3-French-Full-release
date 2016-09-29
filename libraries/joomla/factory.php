@@ -10,6 +10,7 @@ defined('JPATH_PLATFORM') or die;
 
 use Joomla\DI\Container;
 use Joomla\Registry\Registry;
+use PHPMailer\PHPMailer\Exception as phpmailerException;
 
 /**
  * Joomla Platform Factory class.
@@ -809,7 +810,7 @@ abstract class JFactory
 		$lang = self::getLanguage();
 
 		$input = self::getApplication()->input;
-		$type = $input->get('format', 'html', 'word');
+		$type = $input->get('format', 'html', 'cmd');
 
 		$version = new JVersion;
 
@@ -819,7 +820,7 @@ abstract class JFactory
 			'tab'          => "\t",
 			'language'     => $lang->getTag(),
 			'direction'    => $lang->isRtl() ? 'rtl' : 'ltr',
-			'mediaversion' => $version->getMediaVersion()
+			'mediaversion' => $version->getMediaVersion(),
 		);
 
 		return JDocument::getInstance($type, $attributes);

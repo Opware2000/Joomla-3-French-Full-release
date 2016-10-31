@@ -37,6 +37,7 @@ class ContentViewArticle extends JViewLegacy
 	{
 		$app        = JFactory::getApplication();
 		$user       = JFactory::getUser();
+		$dispatcher = JEventDispatcher::getInstance();
 
 		$this->item  = $this->get('Item');
 		$this->print = $app->input->getBool('print');
@@ -154,19 +155,24 @@ class ContentViewArticle extends JViewLegacy
 		$item->tags = new JHelperTags;
 		$item->tags->getItemTags('com_content.article', $this->item->id);
 
+		if ($item->params->get('show_associations'))
+		{
+			$item->associations = ContentHelperAssociation::displayAssociations($item->id);
+		}
+
 		// Process the content plugins.
 
 		JPluginHelper::importPlugin('content');
-		JFactory::getApplication()->triggerEvent('onContentPrepare', array ('com_content.article', &$item, &$item->params, $offset));
+		$dispatcher->trigger('onContentPrepare', array ('com_content.article', &$item, &$item->params, $offset));
 
 		$item->event = new stdClass;
-		$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', array('com_content.article', &$item, &$item->params, $offset));
+		$results = $dispatcher->trigger('onContentAfterTitle', array('com_content.article', &$item, &$item->params, $offset));
 		$item->event->afterDisplayTitle = trim(implode("\n", $results));
 
-		$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array('com_content.article', &$item, &$item->params, $offset));
+		$results = $dispatcher->trigger('onContentBeforeDisplay', array('com_content.article', &$item, &$item->params, $offset));
 		$item->event->beforeDisplayContent = trim(implode("\n", $results));
 
-		$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array('com_content.article', &$item, &$item->params, $offset));
+		$results = $dispatcher->trigger('onContentAfterDisplay', array('com_content.article', &$item, &$item->params, $offset));
 		$item->event->afterDisplayContent = trim(implode("\n", $results));
 
 		// Escape strings for HTML output
@@ -209,11 +215,8 @@ class ContentViewArticle extends JViewLegacy
 		// If the menu item does not concern this article
 		if ($menu && ($menu->query['option'] != 'com_content' || $menu->query['view'] != 'article' || $id != $this->item->id))
 		{
-			// If this is not a single article menu item, set the page title to the article title
-			if ($this->item->title)
-			{
-				$title = $this->item->title;
-			}
+			// If a browser page title is defined, use that, then fall back to the article title if set, then fall back to the page_title option
+			$title = $this->item->params->get('article_page_title', $this->item->title ?: $title);
 
 			$path     = array(array('title' => $this->item->title, 'link' => ''));
 			$category = JCategories::getInstance('Content')->get($this->item->catid);

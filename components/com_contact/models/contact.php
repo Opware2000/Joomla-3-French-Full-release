@@ -85,7 +85,7 @@ class ContactModelContact extends JModelForm
 	public function getForm($data = array(), $loadData = true)
 	{
 		// Get the form.
-		$form = $this->loadForm('com_contact.contact', 'contact', array('control' => 'jform', 'load_data' => true));
+		$form = $this->loadForm('com_contact.mail', 'contact', array('control' => 'jform', 'load_data' => true));
 
 		if (empty($form))
 		{
@@ -205,13 +205,11 @@ class ContactModelContact extends JModelForm
 				}
 
 				// Convert parameter fields to objects.
-				$registry = new Registry;
-				$registry->loadString($data->params);
+				$registry = new Registry($data->params);
 				$data->params = clone $this->getState('params');
 				$data->params->merge($registry);
 
-				$registry = new Registry;
-				$registry->loadString($data->metadata);
+				$registry = new Registry($data->metadata);
 				$data->metadata = $registry;
 
 				$data->tags = new JHelperTags;
@@ -273,8 +271,7 @@ class ContactModelContact extends JModelForm
 		$groups    = implode(',', $user->getAuthorisedViewLevels());
 		$published = $this->getState('filter.published');
 
-		$contactParams = new Registry;
-		$contactParams->loadString($contact->params);
+		$contactParams = new Registry($contact->params);
 
 		// If we are showing a contact list, then the contact parameters take priority
 		// So merge the contact parameters with the merged parameters
@@ -366,11 +363,14 @@ class ContactModelContact extends JModelForm
 		JPluginHelper::importPlugin('user');
 		$form = new JForm('com_users.profile');
 
+		// Get the dispatcher.
+		$dispatcher = JEventDispatcher::getInstance();
+
 		// Trigger the form preparation event.
-		JFactory::getApplication()->triggerEvent('onContentPrepareForm', array($form, $data));
+		$dispatcher->trigger('onContentPrepareForm', array($form, $data));
 
 		// Trigger the data preparation event.
-		JFactory::getApplication()->triggerEvent('onContentPrepareData', array('com_users.profile', $data));
+		$dispatcher->trigger('onContentPrepareData', array('com_users.profile', $data));
 
 		// Load the data into the form after the plugins have operated.
 		$form->bind($data);
@@ -456,8 +456,7 @@ class ContactModelContact extends JModelForm
 			if ($result)
 			{
 
-				$contactParams = new Registry;
-				$contactParams->loadString($result->params);
+				$contactParams = new Registry($result->params);
 
 				// If we are showing a contact list, then the contact parameters take priority
 				// So merge the contact parameters with the merged parameters
@@ -546,11 +545,14 @@ class ContactModelContact extends JModelForm
 				JPluginHelper::importPlugin('user');
 				$form = new JForm('com_users.profile');
 
+				// Get the dispatcher.
+				$dispatcher = JEventDispatcher::getInstance();
+
 				// Trigger the form preparation event.
-				JFactory::getApplication()->triggerEvent('onContentPrepareForm', array($form, $data));
+				$dispatcher->trigger('onContentPrepareForm', array($form, $data));
 
 				// Trigger the data preparation event.
-				JFactory::getApplication()->triggerEvent('onContentPrepareData', array('com_users.profile', $data));
+				$dispatcher->trigger('onContentPrepareData', array('com_users.profile', $data));
 
 				// Load the data into the form after the plugins have operated.
 				$form->bind($data);

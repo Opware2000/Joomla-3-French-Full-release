@@ -9,8 +9,6 @@
 
 defined('JPATH_PLATFORM') or die;
 
-use Joomla\Cms\Error\AbstractRenderer;
-
 /**
  * Displays the custom error page when an uncaught exception occurs.
  *
@@ -63,39 +61,55 @@ class JErrorPage
 				$app = JFactory::getApplication();
 
 				// If site is offline and it's a 404 error, just go to index (to see offline message, instead of 404)
-				if ($error->getCode() == '404' && JFactory::getConfig()->get('offline') == 1)
+				if ($error->getCode() == '404' && $app->get('offline') == 1)
 				{
 					$app->redirect('index.php');
 				}
 
-				/*
-				 * Try and determine the format to render the error page in
-				 *
-				 * First we check if a JDocument instance was registered to JFactory and use the type from that if available
-				 * If a type doesn't exist for that format, we try to use the format from the application's JInput object
-				 * Lastly, if all else fails, we default onto the HTML format to at least render something
-				 */
-				if (JFactory::$document)
+				$attributes = array(
+					'charset'   => 'utf-8',
+					'lineend'   => 'unix',
+					'tab'       => "\t",
+					'language'  => 'en-GB',
+					'direction' => 'ltr',
+				);
+
+				// If there is a JLanguage instance in JFactory then let's pull the language and direction from its metadata
+				if (JFactory::$language)
+				{
+					$attributes['language']  = JFactory::getLanguage()->getTag();
+					$attributes['direction'] = JFactory::getLanguage()->isRtl() ? 'rtl' : 'ltr';
+				}
+
+				$document = JDocument::getInstance('error', $attributes);
+
+				if (!$document)
 				{
 					// We're probably in an CLI environment
-					$format = JFactory::getDocument()->getType();
-				}
-				else
-				{
-					$format = $app->input->getString('format', 'html');
+					jexit($error->getMessage());
 				}
 
-				try
+				// Get the current template from the application
+				$template = $app->getTemplate();
+
+				// Push the error object into the document
+				$document->setError($error);
+
+				if (ob_get_contents())
 				{
-					$renderer = AbstractRenderer::getRenderer($format);
-				}
-				catch (InvalidArgumentException $e)
-				{
-					// Default to the HTML renderer
-					$renderer = AbstractRenderer::getRenderer('html');
+					ob_end_clean();
 				}
 
-				$data = $renderer->render($error);
+				$document->setTitle(JText::_('ERROR') . ': ' . $error->getCode());
+
+				$data = $document->render(
+					false,
+					array(
+						'template'  => $template,
+						'directory' => JPATH_THEMES,
+						'debug'     => JDEBUG,
+					)
+				);
 
 				// Do not allow cache
 				$app->allowCache(false);

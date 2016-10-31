@@ -10,6 +10,7 @@
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\Filter\OutputFilter;
+use Joomla\String\StringHelper;
 
 /**
  * JFilterOutput
@@ -31,7 +32,7 @@ class JFilterOutput extends OutputFilter
 	{
 		$regex = 'href="([^"]*(&(amp;){0})[^"]*)*?"';
 
-		return preg_replace_callback("#$regex#i", array('JFilterOutput', 'ampReplaceCallback'), $input);
+		return preg_replace_callback("#$regex#i", array('JFilterOutput', '_ampReplaceCallback'), $input);
 	}
 
 	/**
@@ -72,7 +73,7 @@ class JFilterOutput extends OutputFilter
 		$str = $lang->transliterate($str);
 
 		// Trim white spaces at beginning and end of alias and make lowercase
-		$str = trim(JString::strtolower($str));
+		$str = trim(StringHelper::strtolower($str));
 
 		// Remove any duplicate whitespace, and ensure all characters are alphanumeric
 		$str = preg_replace('/(\s|[^A-Za-z0-9\-])+/', '-', $str);
@@ -97,5 +98,20 @@ class JFilterOutput extends OutputFilter
 		$rx = '&(?!amp;)';
 
 		return preg_replace('#' . $rx . '#', '&amp;', $m[0]);
+	}
+
+	/**
+	 * Callback method for replacing & with &amp; in a string
+	 *
+	 * @param   string  $m  String to process
+	 *
+	 * @return  string  Replaced string
+	 *
+	 * @since       11.1
+	 * @deprecated  4.0 Use JFilterOutput::ampReplaceCallback() instead
+	 */
+	public static function _ampReplaceCallback($m)
+	{
+		return static::ampReplaceCallback($m);
 	}
 }

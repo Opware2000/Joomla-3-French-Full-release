@@ -58,9 +58,7 @@ class JComponentHelper
 
 		if (is_string($result->params))
 		{
-			$temp = new Registry;
-			$temp->loadString(static::$components[$option]->params);
-			static::$components[$option]->params = $temp;
+			static::$components[$option]->params = new Registry(static::$components[$option]->params);
 		}
 
 		return $result;
@@ -406,6 +404,21 @@ class JComponentHelper
 		$contents = ob_get_clean();
 
 		return $contents;
+	}
+
+	/**
+	 * Load the installed components into the components property.
+	 *
+	 * @param   string  $option  The element value for the extension
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   1.5
+	 * @deprecated  4.0  Use JComponentHelper::load() instead
+	 */
+	protected static function _load($option)
+	{
+		return static::load($option);
 	}
 
 	/**

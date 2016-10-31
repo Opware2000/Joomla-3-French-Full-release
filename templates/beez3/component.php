@@ -9,7 +9,12 @@
 
 defined('_JEXEC') or die;
 
+/** @var JDocumentHtml $this */
+
 $color = $this->params->get('templatecolor');
+
+// Output as HTML5
+$this->setHtml5(true);
 
 $this->addStyleSheet($this->baseurl . '/templates/system/css/system.css');
 $this->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/template.css', 'text/css', 'screen');

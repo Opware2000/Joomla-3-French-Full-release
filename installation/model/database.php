@@ -90,7 +90,7 @@ class InstallationModelDatabase extends JModelBase
 	 */
 	public function initialise($options)
 	{
-		// Get the options as a object for easier handling.
+		// Get the options as an object for easier handling.
 		$options = ArrayHelper::toObject($options);
 
 		// Load the backend language files so that the DB error messages work.
@@ -214,7 +214,7 @@ class InstallationModelDatabase extends JModelBase
 			return false;
 		}
 
-		// Get the options as a object for easier handling.
+		// Get the options as an object for easier handling.
 		$options = ArrayHelper::toObject($options);
 
 		// Check database version.
@@ -428,7 +428,7 @@ class InstallationModelDatabase extends JModelBase
 			return false;
 		}
 
-		// Get the options as a object for easier handling.
+		// Get the options as an object for easier handling.
 		$options = ArrayHelper::toObject($options);
 
 		// Set the character set to UTF-8 for pre-existing databases.
@@ -477,7 +477,7 @@ class InstallationModelDatabase extends JModelBase
 			return false;
 		}
 
-		// Get the options as a object for easier handling.
+		// Get the options as an object for easier handling.
 		$options = ArrayHelper::toObject($options);
 
 		// Check database type.
@@ -490,6 +490,10 @@ class InstallationModelDatabase extends JModelBase
 		if (($type == 'mysql') || ($type == 'mysqli') || ($type == 'pdomysql'))
 		{
 			$schema = 'sql/mysql/joomla.sql';
+		}
+		elseif ($type == 'sqlsrv' || $type == 'sqlazure')
+		{
+			$schema = 'sql/sqlazure/joomla.sql';
 		}
 		else
 		{
@@ -541,6 +545,10 @@ class InstallationModelDatabase extends JModelBase
 		if (($type == 'mysql') || ($type == 'mysqli') || ($type == 'pdomysql'))
 		{
 			$pathPart .= 'mysql/';
+		}
+		elseif ($type == 'sqlsrv' || $type == 'sqlazure')
+		{
+			$pathPart .= 'sqlazure/';
 		}
 		else
 		{
@@ -624,6 +632,10 @@ class InstallationModelDatabase extends JModelBase
 		{
 			$dblocalise = 'sql/mysql/localise.sql';
 		}
+		elseif ($type == 'sqlsrv' || $type == 'sqlazure')
+		{
+			$dblocalise = 'sql/sqlazure/localise.sql';
+		}
 		else
 		{
 			$dblocalise = 'sql/' . $type . '/localise.sql';
@@ -704,7 +716,7 @@ class InstallationModelDatabase extends JModelBase
 			return false;
 		}
 
-		// Get the options as a object for easier handling.
+		// Get the options as an object for easier handling.
 		$options = ArrayHelper::toObject($options);
 
 		// Build the path to the sample data file.
@@ -713,6 +725,10 @@ class InstallationModelDatabase extends JModelBase
 		if ($type == 'mysqli' || $type == 'pdomysql')
 		{
 			$type = 'mysql';
+		}
+		elseif ($type == 'sqlsrv')
+		{
+			$type = 'sqlazure';
 		}
 
 		$data = JPATH_INSTALLATION . '/sql/' . $type . '/' . $options->sample_file;

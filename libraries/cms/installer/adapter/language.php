@@ -29,14 +29,6 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 	protected $core = false;
 
 	/**
-	 * The language tag for the package
-	 *
-	 * @var    string
-	 * @since  4.0
-	 */
-	protected $tag;
-
-	/**
 	 * Method to copy the extension's base files from the `<files>` tag(s) and the manifest file
 	 *
 	 * @return  void
@@ -115,17 +107,17 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 			$basePath = $client->path;
 			$clientId = $client->id;
-			$element = $this->getManifest()->files;
+			$element  = $this->getManifest()->files;
 
 			return $this->_install($cname, $basePath, $clientId, $element);
 		}
 		else
 		{
 			// No client attribute was found so we assume the site as the client
-			$cname = 'site';
+			$cname    = 'site';
 			$basePath = JPATH_SITE;
 			$clientId = 0;
-			$element = $this->getManifest()->files;
+			$element  = $this->getManifest()->files;
 
 			return $this->_install($cname, $basePath, $clientId, $element);
 		}
@@ -149,7 +141,8 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Get the language name
 		// Set the extensions name
-		$this->name = JFilterInput::getInstance()->clean((string) $this->getManifest()->name, 'cmd');
+		$name = JFilterInput::getInstance()->clean((string) $this->getManifest()->name, 'cmd');
+		$this->set('name', $name);
 
 		// Get the Language tag [ISO tag, eg. en-GB]
 		$tag = (string) $this->getManifest()->tag;
@@ -162,7 +155,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			return false;
 		}
 
-		$this->tag = $tag;
+		$this->set('tag', $tag);
 
 		// Set the language installation path
 		$this->parent->setPath('extension_site', $basePath . '/language/' . $tag);
@@ -286,9 +279,9 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Add an entry to the extension table with a whole heap of defaults
 		$row = JTable::getInstance('extension');
-		$row->set('name', $this->name);
+		$row->set('name', $this->get('name'));
 		$row->set('type', 'language');
-		$row->set('element', $this->tag);
+		$row->set('element', $this->get('tag'));
 
 		// There is no folder for languages
 		$row->set('folder', '');
@@ -307,9 +300,81 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			return false;
 		}
 
+		// Create an unpublished content language.
+		if ((int) $clientId === 0)
+		{
+			// Load the site language manifest.
+			$siteLanguageManifest = JLanguage::parseXMLLanguageFile(JPATH_SITE . '/language/' . $this->tag . '/' . $this->tag . '.xml');
+
+			// Set the content language title as the language metadata name.
+			$contentLanguageTitle = $siteLanguageManifest['name'];
+
+			// Set, as fallback, the content language native title to the language metadata name.
+			$contentLanguageNativeTitle = $contentLanguageTitle;
+
+			// If exist, load the native title from the language xml metadata.
+			if (isset($siteLanguageMetadata['nativeName']) && $siteLanguageMetadata['nativeName'])
+			{
+				$contentLanguageNativeTitle = $siteLanguageMetadata['nativeName'];
+			}
+
+			// Try to load a language string from the installation language var. Will be removed in 4.0.
+			if ($contentLanguageNativeTitle === $contentLanguageTitle)
+			{
+				if (file_exists(JPATH_INSTALLATION . '/language/' . $this->tag . '/' . $this->tag . '.xml'))
+				{
+					$installationLanguage = new JLanguage($this->tag);
+					$installationLanguage->load('', JPATH_INSTALLATION);
+
+					if ($installationLanguage->hasKey('INSTL_DEFAULTLANGUAGE_NATIVE_LANGUAGE_NAME'))
+					{
+						// Make sure it will not use the en-GB fallback.
+						$defaultLanguage = new JLanguage('en-GB');
+						$defaultLanguage->load('', JPATH_INSTALLATION);
+
+						$defaultLanguageNativeTitle      = $defaultLanguage->_('INSTL_DEFAULTLANGUAGE_NATIVE_LANGUAGE_NAME');
+						$installationLanguageNativeTitle = $installationLanguage->_('INSTL_DEFAULTLANGUAGE_NATIVE_LANGUAGE_NAME');
+
+						if ($defaultLanguageNativeTitle != $installationLanguageNativeTitle)
+						{
+							$contentLanguageNativeTitle = $installationLanguage->_('INSTL_DEFAULTLANGUAGE_NATIVE_LANGUAGE_NAME');
+						}
+					}
+				}
+			}
+
+			// Prepare language data for store.
+			$languageData = array(
+				'lang_id'      => 0,
+				'lang_code'    => $this->tag,
+				'title'        => $contentLanguageTitle,
+				'title_native' => $contentLanguageNativeTitle,
+				'sef'          => $this->getSefString($this->tag),
+				'image'        => strtolower(str_replace('-', '_', $this->tag)),
+				'published'    => 0,
+				'ordering'     => 0,
+				'access'       => (int) JFactory::getConfig()->get('access', 1),
+				'description'  => '',
+				'metakey'      => '',
+				'metadesc'     => '',
+				'sitename'     => '',
+			);
+
+			$tableLanguage = JTable::getInstance('language');
+
+			if (!$tableLanguage->bind($languageData) || !$tableLanguage->check() || !$tableLanguage->store() || !$tableLanguage->reorder())
+			{
+				JLog::add(
+					JText::sprintf('JLIB_INSTALLER_WARNING_UNABLE_TO_INSTALL_CONTENT_LANGUAGE', $siteLanguageManifest['name'], $tableLanguage->getError()),
+					JLog::WARNING,
+					'jerror'
+				);
+			}
+		}
+
 		// Clobber any possible pending updates
 		$update = JTable::getInstance('update');
-		$uid = $update->find(array('element' => $this->tag, 'type' => 'language', 'folder' => ''));
+		$uid = $update->find(array('element' => $this->get('tag'), 'type' => 'language', 'folder' => ''));
 
 		if ($uid)
 		{
@@ -317,6 +382,47 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		}
 
 		return $row->get('extension_id');
+	}
+
+
+	/**
+	 * Gets a unique language SEF string.
+	 *
+	 * This function checks other existing language with the same code, if they exist provides a unique SEF name.
+	 * For instance: en-GB, en-US and en-AU will share the same SEF code by default: www.mywebsite.com/en/
+	 * To avoid this conflict, this function creates an specific SEF in case of existing conflict:
+	 * For example: www.mywebsite.com/en-au/
+	 *
+	 * @param   string  $itemLanguageTag  Language Tag.
+	 *
+	 * @return  string
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 */
+	protected function getSefString($itemLanguageTag)
+	{
+		$langs               = explode('-', $itemLanguageTag);
+		$prefixToFind        = $langs[0];
+		$numberPrefixesFound = 0;
+
+		// Get the sef value of all current content languages.
+		$db = JFactory::getDbo();
+		$query = $db->getQuery(true)
+			->select($db->qn('sef'))
+			->from($db->qn('#__languages'));
+		$db->setQuery($query);
+
+		$siteLanguages = $db->loadObjectList();
+
+		foreach ($siteLanguages as $siteLang)
+		{
+			if ($siteLang->sef === $prefixToFind)
+			{
+				$numberPrefixesFound++;
+			}
+		}
+
+		return $numberPrefixesFound === 0 ? $prefixToFind : strtolower($itemLanguageTag);
 	}
 
 	/**
@@ -419,7 +525,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Clobber any possible pending updates
 		$update = JTable::getInstance('update');
-		$uid = $update->find(array('element' => $this->tag, 'type' => 'language', 'client_id' => $clientId));
+		$uid = $update->find(array('element' => $this->get('tag'), 'type' => 'language', 'client_id' => $clientId));
 
 		if ($uid)
 		{
@@ -428,7 +534,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Update an entry to the extension table
 		$row = JTable::getInstance('extension');
-		$eid = $row->find(array('element' => strtolower($this->tag), 'type' => 'language', 'client_id' => $clientId));
+		$eid = $row->find(array('element' => strtolower($this->get('tag')), 'type' => 'language', 'client_id' => $clientId));
 
 		if ($eid)
 		{
@@ -447,9 +553,9 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			$row->set('params', $this->parent->getParams());
 		}
 
-		$row->set('name', $this->name);
+		$row->set('name', $this->get('name'));
 		$row->set('type', 'language');
-		$row->set('element', $this->tag);
+		$row->set('element', $this->get('tag'));
 		$row->set('manifest_cache', $this->parent->generateManifestCache());
 
 		if (!$row->store())
@@ -564,8 +670,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		foreach ($users as $user)
 		{
-			$registry = new Registry;
-			$registry->loadString($user->params);
+			$registry = new Registry($user->params);
 
 			if ($registry->get($param_name) == $element)
 			{
@@ -709,4 +814,15 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			return false;
 		}
 	}
+}
+
+/**
+ * Deprecated class placeholder. You should use JInstallerAdapterLanguage instead.
+ *
+ * @since       3.1
+ * @deprecated  4.0
+ * @codeCoverageIgnore
+ */
+class JInstallerLanguage extends JInstallerAdapterLanguage
+{
 }

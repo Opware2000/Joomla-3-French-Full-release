@@ -9,6 +9,9 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\String\StringHelper;
+use Joomla\Utilities\ArrayHelper;
+
 /**
  * User group model.
  *
@@ -113,7 +116,7 @@ class UsersModelGroup extends JModelAdmin
 	 */
 	protected function preprocessForm(JForm $form, $data, $group = '')
 	{
-		$obj = is_array($data) ? JArrayHelper::toObject($data, 'JObject') : $data;
+		$obj = is_array($data) ? ArrayHelper::toObject($data, 'JObject') : $data;
 
 		if (isset($obj->parent_id) && $obj->parent_id == 0 && $obj->id > 0)
 		{
@@ -237,6 +240,7 @@ class UsersModelGroup extends JModelAdmin
 
 		// Load plugins.
 		JPluginHelper::importPlugin($this->events_map['delete']);
+		$dispatcher = JEventDispatcher::getInstance();
 
 		// Check if I am a Super Admin
 		$iAmSuperAdmin = $user->authorise('core.admin');
@@ -265,7 +269,7 @@ class UsersModelGroup extends JModelAdmin
 				if ($allow)
 				{
 					// Fire the before delete event.
-					JFactory::getApplication()->triggerEvent($this->event_before_delete, array($table->getProperties()));
+					$dispatcher->trigger($this->event_before_delete, array($table->getProperties()));
 
 					if (!$table->delete($pk))
 					{
@@ -276,7 +280,7 @@ class UsersModelGroup extends JModelAdmin
 					else
 					{
 						// Trigger the after delete event.
-						JFactory::getApplication()->triggerEvent($this->event_after_delete, array($table->getProperties(), true, $this->getError()));
+						$dispatcher->trigger($this->event_after_delete, array($table->getProperties(), true, $this->getError()));
 					}
 				}
 				else
@@ -316,7 +320,7 @@ class UsersModelGroup extends JModelAdmin
 		{
 			if ($title == $table->title)
 			{
-				$title = JString::increment($title);
+				$title = StringHelper::increment($title);
 			}
 		}
 

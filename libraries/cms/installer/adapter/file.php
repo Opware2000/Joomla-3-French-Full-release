@@ -341,14 +341,10 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			{
 				$manifestScriptFile = $this->parent->getPath('extension_root') . '/' . $manifestScript;
 
-				if (is_file($manifestScriptFile))
-				{
-					// Load the file
-					include_once $manifestScriptFile;
-				}
-
 				// Set the class name
 				$classname = $row->element . 'InstallerScript';
+
+				JLoader::register($classname, $manifestScriptFile);
 
 				if (class_exists($classname))
 				{
@@ -356,7 +352,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 					$this->parent->manifestClass = new $classname($this);
 
 					// And set this so we can copy it later
-					$this->manifest_script = $manifestScript;
+					$this->set('manifest_script', $manifestScript);
 				}
 			}
 
@@ -636,4 +632,15 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			return false;
 		}
 	}
+}
+
+/**
+ * Deprecated class placeholder. You should use JInstallerAdapterFile instead.
+ *
+ * @since       3.1
+ * @deprecated  4.0
+ * @codeCoverageIgnore
+ */
+class JInstallerFile extends JInstallerAdapterFile
+{
 }

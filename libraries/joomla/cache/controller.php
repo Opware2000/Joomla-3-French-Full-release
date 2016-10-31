@@ -102,19 +102,13 @@ class JCacheController
 				throw new RuntimeException('Unable to load Cache Controller: ' . $type, 500);
 			}
 
-			include_once $path;
+			JLoader::register($class, $path);
 
 			// The class should now be loaded
 			if (!class_exists($class))
 			{
 				throw new RuntimeException('Unable to load Cache Controller: ' . $type, 500);
 			}
-		}
-
-		// Check for a possible service from the container otherwise manually instantiate the class
-		if (JFactory::getContainer()->exists($class))
-		{
-			return JFactory::getContainer()->get($class);
 		}
 
 		return new $class($options);

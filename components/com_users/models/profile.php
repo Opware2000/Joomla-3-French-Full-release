@@ -152,10 +152,18 @@ class UsersModelProfile extends JModelForm
 			$this->data->params = $registry->toArray();
 
 			// Get the dispatcher and load the users plugins.
+			$dispatcher = JEventDispatcher::getInstance();
 			JPluginHelper::importPlugin('user');
 
 			// Trigger the data preparation event.
-			$results = JFactory::getApplication()->triggerEvent('onContentPrepareData', array('com_users.profile', $this->data));
+			$results = $dispatcher->trigger('onContentPrepareData', array('com_users.profile', $this->data));
+
+			// Check for errors encountered while preparing the data.
+			if (count($results) && in_array(false, $results, true))
+			{
+				$this->setError($dispatcher->getError());
+				$this->data = false;
+			}
 		}
 
 		return $this->data;
@@ -183,6 +191,10 @@ class UsersModelProfile extends JModelForm
 		{
 			return false;
 		}
+
+		// For com_fields the context is com_users.user
+		JLoader::import('components.com_fields.helpers.fields', JPATH_ADMINISTRATOR);
+		FieldsHelper::prepareForm('com_users.user', $form, $data);
 
 		// Check for username compliance and parameter set
 		$isUsernameCompliant = true;

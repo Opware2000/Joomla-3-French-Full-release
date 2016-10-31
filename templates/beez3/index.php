@@ -10,6 +10,8 @@
 // No direct access.
 defined('_JEXEC') or die;
 
+/** @var JDocumentHtml $this */
+
 JLoader::import('joomla.filesystem.file');
 
 // Check modules
@@ -32,6 +34,9 @@ $headerImage    = $this->params->get('headerImage');
 $config         = JFactory::getConfig();
 $bootstrap      = explode(',', $this->params->get('bootstrap'));
 $option         = JFactory::getApplication()->input->getCmd('option', '');
+
+// Output as HTML5
+$this->setHtml5(true);
 
 if (in_array($option, $bootstrap))
 {

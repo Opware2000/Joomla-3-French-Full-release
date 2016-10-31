@@ -175,7 +175,6 @@ class JArchive
 	 *
 	 * @since   11.1
 	 * @throws  UnexpectedValueException
-	 * @todo    This should allow custom class prefixes to be configured somehow
 	 */
 	public static function getAdapter($type)
 	{
@@ -189,15 +188,7 @@ class JArchive
 				throw new UnexpectedValueException('Unable to load archive', 500);
 			}
 
-			// Check for a possible service from the container otherwise manually instantiate the class
-			if (JFactory::getContainer()->exists($class))
-			{
-				self::$adapters[$type] = JFactory::getContainer()->get($class);
-			}
-			else
-			{
-				self::$adapters[$type] = new $class;
-			}
+			self::$adapters[$type] = new $class;
 		}
 
 		return self::$adapters[$type];

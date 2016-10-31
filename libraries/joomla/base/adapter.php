@@ -130,37 +130,24 @@ class JAdapter extends JObject
 			return true;
 		}
 
-		// Assemble the class name for the requested adapter
+		$fullpath = $this->_basepath . '/' . $this->_adapterfolder . '/' . strtolower($name) . '.php';
+
+		if (!file_exists($fullpath))
+		{
+			return false;
+		}
+
+		// Try to load the adapter object
 		$class = $this->_classprefix . ucfirst($name);
+
+		JLoader::register($class, $fullpath);
 
 		if (!class_exists($class))
 		{
-			$fullpath = $this->_basepath . '/' . $this->_adapterfolder . '/' . strtolower($name) . '.php';
-
-			if (!file_exists($fullpath))
-			{
-				return false;
-			}
-
-			// Try to load the adapter object
-			require_once $fullpath;
-
-			// The class should now be loaded
-			if (!class_exists($class))
-			{
-				return false;
-			}
+			return false;
 		}
 
-		// Check for a possible service from the container otherwise manually instantiate the class
-		if (JFactory::getContainer()->exists($class))
-		{
-			$this->_adapters[$name] = JFactory::getContainer()->get($class);
-		}
-		else
-		{
-			$this->_adapters[$name] = new $class($this, $this->_db, $options);
-		}
+		$this->_adapters[$name] = new $class($this, $this->_db, $options);
 
 		return true;
 	}

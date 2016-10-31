@@ -8,6 +8,8 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\Utilities\ArrayHelper;
+
 /**
  * Languages Installer Controller
  *
@@ -42,7 +44,8 @@ class InstallerControllerLanguages extends JControllerLegacy
 
 		if (!$model->findLanguages($cache_timeout))
 		{
-			$this->setMessage($model->getError(), 'error');
+			$this->setError($model->getError());
+			$this->setMessage($this->getError(), 'error');
 		}
 
 		$this->setRedirect(JRoute::_('index.php?option=com_installer&view=languages', false));
@@ -80,13 +83,12 @@ class InstallerControllerLanguages extends JControllerLegacy
 
 		// Get array of selected languages
 		$lids = $this->input->get('cid', array(), 'array');
-		JArrayHelper::toInteger($lids, array());
+		$lids = ArrayHelper::toInteger($lids, array());
 
 		if (!$lids)
 		{
 			// No languages have been selected
-			$app = JFactory::getApplication();
-			$app->enqueueMessage(JText::_('COM_INSTALLER_MSG_DISCOVER_NOEXTENSIONSELECTED'));
+			JFactory::getApplication()->enqueueMessage(JText::_('COM_INSTALLER_MSG_DISCOVER_NOEXTENSIONSELECTED'));
 		}
 		else
 		{

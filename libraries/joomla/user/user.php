@@ -275,7 +275,7 @@ class JUser extends JObject
 			if (!$id = $userHelper->getUserId($identifier))
 			{
 				// If the $identifier doesn't match with any id, just return an empty JUser.
-				return new static;
+				return new JUser;
 			}
 		}
 		else
@@ -287,13 +287,14 @@ class JUser extends JObject
 		// Note: don't cache this user because it'll have a new ID on save!
 		if ($id === 0)
 		{
-			return new static;
+			return new JUser;
 		}
 
 		// Check if the user ID is already cached.
 		if (empty(self::$instances[$id]))
 		{
-			self::$instances[$id] = new static($id, $userHelper);
+			$user = new JUser($id, $userHelper);
+			self::$instances[$id] = $user;
 		}
 
 		return self::$instances[$id];
@@ -363,8 +364,7 @@ class JUser extends JObject
 			$this->isRoot = false;
 
 			// Check for the configuration file failsafe.
-			$config = JFactory::getConfig();
-			$rootUser = $config->get('root_user');
+			$rootUser = JFactory::getConfig()->get('root_user');
 
 			// The root_user variable can be a numeric user ID or a username.
 			if (is_numeric($rootUser) && $this->id > 0 && $this->id == $rootUser)
@@ -375,7 +375,7 @@ class JUser extends JObject
 			{
 				$this->isRoot = true;
 			}
-			else
+			elseif ($this->id > 0)
 			{
 				// Get all groups against which the user is mapped.
 				$identities = $this->getAuthorisedGroups();
@@ -509,6 +509,26 @@ class JUser extends JObject
 		$table->load($this->id);
 
 		return $table->setLastVisit($timestamp);
+	}
+
+	/**
+	 * Method to get the user parameters
+	 *
+	 * This method used to load the user parameters from a file.
+	 *
+	 * @return  object   The user parameters object.
+	 *
+	 * @since   11.1
+	 * @deprecated  12.3 (Platform) & 4.0 (CMS) - Instead use JUser::getParam()
+	 */
+	public function getParameters()
+	{
+		// @codeCoverageIgnoreStart
+		JLog::add('JUser::getParameters() is deprecated. JUser::getParam().', JLog::WARNING, 'deprecated');
+
+		return $this->_params;
+
+		// @codeCoverageIgnoreEnd
 	}
 
 	/**
@@ -757,8 +777,9 @@ class JUser extends JObject
 
 			// Fire the onUserBeforeSave event.
 			JPluginHelper::importPlugin('user');
+			$dispatcher = JEventDispatcher::getInstance();
 
-			$result = JFactory::getApplication()->triggerEvent('onUserBeforeSave', array($oldUser->getProperties(), $isNew, $this->getProperties()));
+			$result = $dispatcher->trigger('onUserBeforeSave', array($oldUser->getProperties(), $isNew, $this->getProperties()));
 
 			if (in_array(false, $result, true))
 			{
@@ -777,13 +798,12 @@ class JUser extends JObject
 
 			if ($my->id == $table->id)
 			{
-				$registry = new Registry;
-				$registry->loadString($table->params);
+				$registry = new Registry($table->params);
 				$my->setParameters($registry);
 			}
 
 			// Fire the onUserAfterSave event
-			JFactory::getApplication()->triggerEvent('onUserAfterSave', array($this->getProperties(), $isNew, $result, $this->getError()));
+			$dispatcher->trigger('onUserAfterSave', array($this->getProperties(), $isNew, $result, $this->getError()));
 		}
 		catch (Exception $e)
 		{
@@ -807,7 +827,8 @@ class JUser extends JObject
 		JPluginHelper::importPlugin('user');
 
 		// Trigger the onUserBeforeDelete event
-		JFactory::getApplication()->triggerEvent('onUserBeforeDelete', array($this->getProperties()));
+		$dispatcher = JEventDispatcher::getInstance();
+		$dispatcher->trigger('onUserBeforeDelete', array($this->getProperties()));
 
 		// Create the user table object
 		$table = $this->getTable();
@@ -818,7 +839,7 @@ class JUser extends JObject
 		}
 
 		// Trigger the onUserAfterDelete event
-		JFactory::getApplication()->triggerEvent('onUserAfterDelete', array($this->getProperties(), $result, $this->getError()));
+		$dispatcher->trigger('onUserAfterDelete', array($this->getProperties(), $result, $this->getError()));
 
 		return $result;
 	}

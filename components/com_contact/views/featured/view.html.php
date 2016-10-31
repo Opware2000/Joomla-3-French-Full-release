@@ -35,6 +35,24 @@ class ContactViewFeatured extends JViewLegacy
 	protected $items;
 
 	/**
+	 * Who knows what this variable was intended for - but it's never been used
+	 *
+	 * @var         array
+	 * @since       1.6.0
+	 * @deprecated  4.0  This variable has been null since 1.6.0-beta8
+	 */
+	protected $category;
+
+	/**
+	 * Who knows what this variable was intended for - but it's never been used
+	 *
+	 * @var         JObject  Maybe.
+	 * @since       1.6.0
+	 * @deprecated  4.0  This variable has never been used ever
+	 */
+	protected $categories;
+
+	/**
 	 * The pagination object
 	 *
 	 * @var    JPagination
@@ -78,9 +96,7 @@ class ContactViewFeatured extends JViewLegacy
 		{
 			$item       = &$items[$i];
 			$item->slug = $item->alias ? ($item->id . ':' . $item->alias) : $item->id;
-			$temp       = new Registry;
-
-			$temp->loadString($item->params);
+			$temp       = new Registry($item->params);
 			$item->params = clone $params;
 			$item->params->merge($temp);
 

@@ -32,8 +32,6 @@ abstract class JInstallerHelper
 	 */
 	public static function downloadPackage($url, $target = false)
 	{
-		$config = JFactory::getConfig();
-
 		// Capture PHP errors
 		$track_errors = ini_get('track_errors');
 		ini_set('track_errors', true);
@@ -45,7 +43,8 @@ abstract class JInstallerHelper
 		// Load installer plugins, and allow url and headers modification
 		$headers = array();
 		JPluginHelper::importPlugin('installer');
-		JFactory::getApplication()->triggerEvent('onInstallerBeforePackageDownload', array(&$url, &$headers));
+		$dispatcher = JEventDispatcher::getInstance();
+		$results = $dispatcher->trigger('onInstallerBeforePackageDownload', array(&$url, &$headers));
 
 		try
 		{
@@ -77,14 +76,16 @@ abstract class JInstallerHelper
 			$target = trim($flds[0], '"');
 		}
 
+		$tmpPath = JFactory::getConfig()->get('tmp_path');
+
 		// Set the target path if not given
 		if (!$target)
 		{
-			$target = $config->get('tmp_path') . '/' . self::getFilenameFromUrl($url);
+			$target = $tmpPath . '/' . self::getFilenameFromUrl($url);
 		}
 		else
 		{
-			$target = $config->get('tmp_path') . '/' . basename($target);
+			$target = $tmpPath . '/' . basename($target);
 		}
 
 		// Write buffer to file
@@ -305,5 +306,25 @@ abstract class JInstallerHelper
 			// It might also be just a base filename
 			JFile::delete(JPath::clean($config->get('tmp_path') . '/' . $package));
 		}
+	}
+
+	/**
+	 * Splits contents of a sql file into array of discreet queries.
+	 * Queries need to be delimited with end of statement marker ';'
+	 *
+	 * @param   string  $query  The SQL statement.
+	 *
+	 * @return  array  Array of queries
+	 *
+	 * @since   3.1
+	 * @deprecated  13.3  Use JDatabaseDriver::splitSql() directly
+	 * @codeCoverageIgnore
+	 */
+	public static function splitSql($query)
+	{
+		JLog::add('JInstallerHelper::splitSql() is deprecated. Use JDatabaseDriver::splitSql() instead.', JLog::WARNING, 'deprecated');
+		$db = JFactory::getDbo();
+
+		return $db->splitSql($query);
 	}
 }

@@ -10,6 +10,7 @@
 defined('_JEXEC') or die;
 
 use Joomla\Registry\Registry;
+use Joomla\String\StringHelper;
 
 /**
  * Contact Table class.
@@ -29,14 +30,16 @@ class ContactTableContact extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  $db  Database connector object
+	 * @param   JDatabaseDriver  &$db  Database connector object
 	 *
 	 * @since   1.0
 	 */
-	public function __construct(JDatabaseDriver $db)
+	public function __construct(&$db)
 	{
-		$this->typeAlias = 'com_contact.contact';
 		parent::__construct('#__contact_details', 'id', $db);
+
+		JTableObserverTags::createObserver($this, array('typeAlias' => 'com_contact.contact'));
+		JTableObserverContenthistory::createObserver($this, array('typeAlias' => 'com_contact.contact'));
 	}
 
 	/**
@@ -53,8 +56,7 @@ class ContactTableContact extends JTable
 		// Transform the params field
 		if (is_array($this->params))
 		{
-			$registry = new Registry;
-			$registry->loadArray($this->params);
+			$registry = new Registry($this->params);
 			$this->params = (string) $registry;
 		}
 
@@ -130,17 +132,6 @@ class ContactTableContact extends JTable
 	 */
 	public function check()
 	{
-		try
-		{
-			parent::check();
-		}
-		catch (\Exception $e)
-		{
-			$this->setError($e->getMessage());
-
-			return false;
-		}
-
 		$this->default_con = (int) $this->default_con;
 
 		if (JFilterInput::checkAttribute(array('href', $this->webpage)))
@@ -194,7 +185,7 @@ class ContactTableContact extends JTable
 			$bad_characters = array("\n", "\r", "\"", "<", ">");
 
 			// Remove bad characters.
-			$after_clean = JString::str_ireplace($bad_characters, "", $this->metakey);
+			$after_clean = StringHelper::str_ireplace($bad_characters, "", $this->metakey);
 
 			// Create array using commas as delimiter.
 			$keys = explode(',', $after_clean);
@@ -218,7 +209,7 @@ class ContactTableContact extends JTable
 		{
 			// Only process if not empty
 			$bad_characters = array("\"", "<", ">");
-			$this->metadesc = JString::str_ireplace($bad_characters, "", $this->metadesc);
+			$this->metadesc = StringHelper::str_ireplace($bad_characters, "", $this->metadesc);
 		}
 
 		return true;

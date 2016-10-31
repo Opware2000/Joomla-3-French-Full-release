@@ -75,6 +75,7 @@ class ContactControllerContact extends JControllerForm
 
 		// Contact plugins
 		JPluginHelper::importPlugin('contact');
+		$dispatcher = JEventDispatcher::getInstance();
 
 		// Validate the posted data.
 		$form = $model->getForm();
@@ -116,7 +117,7 @@ class ContactControllerContact extends JControllerForm
 		}
 
 		// Validation succeeded, continue with custom handlers
-		$results = JFactory::getApplication()->triggerEvent('onValidateContact', array(&$contact, &$data));
+		$results = $dispatcher->trigger('onValidateContact', array(&$contact, &$data));
 
 		foreach ($results as $result)
 		{
@@ -127,7 +128,7 @@ class ContactControllerContact extends JControllerForm
 		}
 
 		// Passed Validation: Process the contact plugins to integrate with other applications
-		JFactory::getApplication()->triggerEvent('onSubmitContact', array(&$contact, &$data));
+		$dispatcher->trigger('onSubmitContact', array(&$contact, &$data));
 
 		// Send the email
 		$sent = false;
@@ -196,6 +197,20 @@ class ContactControllerContact extends JControllerForm
 			// Prepare email body
 			$prefix = JText::sprintf('COM_CONTACT_ENQUIRY_TEXT', JUri::base());
 			$body   = $prefix . "\n" . $name . ' <' . $email . '>' . "\r\n\r\n" . stripslashes($body);
+
+			// Load the custom fields
+			if ($data['params'] && $fields = FieldsHelper::getFields('com_contact.mail', $contact, true, $data['params']))
+			{
+				$output = FieldsHelper::render(
+							'com_contact.mail',
+							'fields.render',
+							array('context' => 'com_contact.mail', 'item' => $contact, 'fields' => $fields)
+				);
+				if ($output)
+				{
+					$body  .= "\r\n\r\n" . $output;
+				}
+			}
 
 			$mail = JFactory::getMailer();
 			$mail->addRecipient($contact->email_to);

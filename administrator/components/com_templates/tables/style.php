@@ -21,11 +21,11 @@ class TemplatesTableStyle extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  $db  A database connector object
+	 * @param   JDatabaseDriver  &$db  A database connector object
 	 *
 	 * @since   1.6
 	 */
-	public function __construct(JDatabaseDriver $db)
+	public function __construct(&$db)
 	{
 		parent::__construct('#__template_styles', 'id', $db);
 	}
@@ -44,8 +44,7 @@ class TemplatesTableStyle extends JTable
 	{
 		if (isset($array['params']) && is_array($array['params']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['params']);
+			$registry = new Registry($array['params']);
 			$array['params'] = (string) $registry;
 		}
 
@@ -69,17 +68,6 @@ class TemplatesTableStyle extends JTable
 	 */
 	public function check()
 	{
-		try
-		{
-			parent::check();
-		}
-		catch (\Exception $e)
-		{
-			$this->setError($e->getMessage());
-
-			return false;
-		}
-
 		if (empty($this->title))
 		{
 			$this->setError(JText::_('COM_TEMPLATES_ERROR_STYLE_REQUIRES_TITLE'));

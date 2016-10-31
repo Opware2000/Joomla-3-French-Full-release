@@ -9,8 +9,6 @@
 
 defined('JPATH_PLATFORM') or die;
 
-use Joomla\Event\DispatcherInterface;
-
 /**
  * Plugin helper class
  *
@@ -136,16 +134,16 @@ abstract class JPluginHelper
 	 * Loads all the plugin files for a particular type if no specific plugin is specified
 	 * otherwise only the specific plugin is loaded.
 	 *
-	 * @param   string               $type        The plugin type, relates to the subdirectory in the plugins directory.
-	 * @param   string               $plugin      The plugin name.
-	 * @param   boolean              $autocreate  Autocreate the plugin.
-	 * @param   DispatcherInterface  $dispatcher  Optionally allows the plugin to use a different dispatcher.
+	 * @param   string            $type        The plugin type, relates to the subdirectory in the plugins directory.
+	 * @param   string            $plugin      The plugin name.
+	 * @param   boolean           $autocreate  Autocreate the plugin.
+	 * @param   JEventDispatcher  $dispatcher  Optionally allows the plugin to use a different dispatcher.
 	 *
 	 * @return  boolean  True on success.
 	 *
 	 * @since   1.5
 	 */
-	public static function importPlugin($type, $plugin = null, $autocreate = true, DispatcherInterface $dispatcher = null)
+	public static function importPlugin($type, $plugin = null, $autocreate = true, JEventDispatcher $dispatcher = null)
 	{
 		static $loaded = array();
 
@@ -189,15 +187,32 @@ abstract class JPluginHelper
 	/**
 	 * Loads the plugin file.
 	 *
-	 * @param   object               $plugin      The plugin.
-	 * @param   boolean              $autocreate  True to autocreate.
-	 * @param   DispatcherInterface  $dispatcher  Optionally allows the plugin to use a different dispatcher.
+	 * @param   object            $plugin      The plugin.
+	 * @param   boolean           $autocreate  True to autocreate.
+	 * @param   JEventDispatcher  $dispatcher  Optionally allows the plugin to use a different dispatcher.
+	 *
+	 * @return  void
+	 *
+	 * @since   1.5
+	 * @deprecated  4.0  Use JPluginHelper::import() instead
+	 */
+	protected static function _import($plugin, $autocreate = true, JEventDispatcher $dispatcher = null)
+	{
+		static::import($plugin, $autocreate, $dispatcher);
+	}
+
+	/**
+	 * Loads the plugin file.
+	 *
+	 * @param   object            $plugin      The plugin.
+	 * @param   boolean           $autocreate  True to autocreate.
+	 * @param   JEventDispatcher  $dispatcher  Optionally allows the plugin to use a different dispatcher.
 	 *
 	 * @return  void
 	 *
 	 * @since   3.2
 	 */
-	protected static function import($plugin, $autocreate = true, DispatcherInterface $dispatcher = null)
+	protected static function import($plugin, $autocreate = true, JEventDispatcher $dispatcher = null)
 	{
 		static $paths = array();
 
@@ -222,7 +237,7 @@ abstract class JPluginHelper
 					// Makes sure we have an event dispatcher
 					if (!is_object($dispatcher))
 					{
-						$dispatcher = JFactory::getApplication()->getDispatcher();
+						$dispatcher = JEventDispatcher::getInstance();
 					}
 
 					$className = 'Plg' . $plugin->type . $plugin->name;
@@ -253,6 +268,19 @@ abstract class JPluginHelper
 	 *
 	 * @return  array  An array of published plugins
 	 *
+	 * @since   1.5
+	 * @deprecated  4.0  Use JPluginHelper::load() instead
+	 */
+	protected static function _load()
+	{
+		return static::load();
+	}
+
+	/**
+	 * Loads the published plugins.
+	 *
+	 * @return  array  An array of published plugins
+	 *
 	 * @since   3.2
 	 */
 	protected static function load()
@@ -262,27 +290,31 @@ abstract class JPluginHelper
 			return static::$plugins;
 		}
 
-		$user = JFactory::getUser();
-		$cache = JFactory::getCache('com_plugins', '');
+		$levels = implode(',', JFactory::getUser()->getAuthorisedViewLevels());
 
-		$levels = implode(',', $user->getAuthorisedViewLevels());
+		/** @var JCacheControllerCallback $cache */
+		$cache = JFactory::getCache('com_plugins', 'callback');
 
-		if (!(static::$plugins = $cache->get($levels)))
-		{
-			$db = JFactory::getDbo();
-			$query = $db->getQuery(true)
-				->select('folder AS type, element AS name, params')
-				->from('#__extensions')
-				->where('enabled = 1')
-				->where('type =' . $db->quote('plugin'))
-				->where('state IN (0,1)')
-				->where('access IN (' . $levels . ')')
-				->order('ordering');
+		static::$plugins = $cache->get(
+			function () use ($levels)
+			{
+				$db = JFactory::getDbo();
+				$query = $db->getQuery(true)
+					->select(array($db->quoteName('folder', 'type'), $db->quoteName('element', 'name'), $db->quoteName('params')))
+					->from('#__extensions')
+					->where('enabled = 1')
+					->where('type = ' . $db->quote('plugin'))
+					->where('state IN (0,1)')
+					->where('access IN (' . $levels . ')')
+					->order('ordering');
+				$db->setQuery($query);
 
-			static::$plugins = $db->setQuery($query)->loadObjectList();
-
-			$cache->store(static::$plugins, $levels);
-		}
+				return $db->loadObjectList();
+			},
+			array(),
+			md5($levels),
+			false
+		);
 
 		return static::$plugins;
 	}

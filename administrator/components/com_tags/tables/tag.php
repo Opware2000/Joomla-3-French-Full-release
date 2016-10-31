@@ -10,6 +10,7 @@
 defined('_JEXEC') or die;
 
 use Joomla\Registry\Registry;
+use Joomla\String\StringHelper;
 
 /**
  * Tags table
@@ -23,10 +24,11 @@ class TagsTableTag extends JTableNested
 	 *
 	 * @param   JDatabaseDriver  $db  A database connector object
 	 */
-	public function __construct(JDatabaseDriver $db)
+	public function __construct($db)
 	{
-		$this->typeAlias = 'com_tags.tag';
 		parent::__construct('#__tags', 'id', $db);
+
+		JTableObserverContenthistory::createObserver($this, array('typeAlias' => 'com_tags.tag'));
 	}
 
 	/**
@@ -45,29 +47,25 @@ class TagsTableTag extends JTableNested
 	{
 		if (isset($array['params']) && is_array($array['params']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['params']);
+			$registry = new Registry($array['params']);
 			$array['params'] = (string) $registry;
 		}
 
 		if (isset($array['metadata']) && is_array($array['metadata']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['metadata']);
+			$registry = new Registry($array['metadata']);
 			$array['metadata'] = (string) $registry;
 		}
 
 		if (isset($array['urls']) && is_array($array['urls']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['urls']);
+			$registry = new Registry($array['urls']);
 			$array['urls'] = (string) $registry;
 		}
 
 		if (isset($array['images']) && is_array($array['images']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['images']);
+			$registry = new Registry($array['images']);
 			$array['images'] = (string) $registry;
 		}
 
@@ -84,17 +82,6 @@ class TagsTableTag extends JTableNested
 	 */
 	public function check()
 	{
-		try
-		{
-			parent::check();
-		}
-		catch (\Exception $e)
-		{
-			$this->setError($e->getMessage());
-
-			return false;
-		}
-
 		// Check for valid name.
 		if (trim($this->title) == '')
 		{
@@ -128,7 +115,7 @@ class TagsTableTag extends JTableNested
 			$bad_characters = array("\n", "\r", "\"", "<", ">");
 
 			// Remove bad characters
-			$after_clean = JString::str_ireplace($bad_characters, "", $this->metakey);
+			$after_clean = StringHelper::str_ireplace($bad_characters, "", $this->metakey);
 
 			// Create array using commas as delimiter
 			$keys = explode(',', $after_clean);
@@ -152,7 +139,7 @@ class TagsTableTag extends JTableNested
 		{
 			// Only process if not empty
 			$bad_characters = array("\"", "<", ">");
-			$this->metadesc = JString::str_ireplace($bad_characters, "", $this->metadesc);
+			$this->metadesc = StringHelper::str_ireplace($bad_characters, "", $this->metadesc);
 		}
 		// Not Null sanity check
 		$date = JFactory::getDate();

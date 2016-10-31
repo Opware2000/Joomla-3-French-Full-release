@@ -77,6 +77,7 @@ class ContentViewCategory extends JViewCategory
 		$numLeading = $params->def('num_leading_articles', 1);
 		$numIntro   = $params->def('num_intro_articles', 4);
 		$numLinks   = $params->def('num_links', 4);
+		$this->vote = JPluginHelper::isEnabled('content', 'vote');
 
 		// Compute the article slugs and prepare introtext (runs content plugins).
 		foreach ($this->items as $item)
@@ -94,6 +95,8 @@ class ContentViewCategory extends JViewCategory
 			$item->catslug = $item->category_alias ? ($item->catid . ':' . $item->category_alias) : $item->catid;
 			$item->event   = new stdClass;
 
+			$dispatcher = JEventDispatcher::getInstance();
+
 			// Old plugins: Ensure that text property is available
 			if (!isset($item->text))
 			{
@@ -101,18 +104,18 @@ class ContentViewCategory extends JViewCategory
 			}
 
 			JPluginHelper::importPlugin('content');
-			JFactory::getApplication()->triggerEvent('onContentPrepare', array ('com_content.category', &$item, &$item->params, 0));
+			$dispatcher->trigger('onContentPrepare', array ('com_content.category', &$item, &$item->params, 0));
 
 			// Old plugins: Use processed text as introtext
 			$item->introtext = $item->text;
 
-			$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', array('com_content.category', &$item, &$item->params, 0));
+			$results = $dispatcher->trigger('onContentAfterTitle', array('com_content.category', &$item, &$item->params, 0));
 			$item->event->afterDisplayTitle = trim(implode("\n", $results));
 
-			$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array('com_content.category', &$item, &$item->params, 0));
+			$results = $dispatcher->trigger('onContentBeforeDisplay', array('com_content.category', &$item, &$item->params, 0));
 			$item->event->beforeDisplayContent = trim(implode("\n", $results));
 
-			$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array('com_content.category', &$item, &$item->params, 0));
+			$results = $dispatcher->trigger('onContentAfterDisplay', array('com_content.category', &$item, &$item->params, 0));
 			$item->event->afterDisplayContent = trim(implode("\n", $results));
 		}
 

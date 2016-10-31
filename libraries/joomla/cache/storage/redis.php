@@ -64,16 +64,15 @@ class JCacheStorageRedis extends JCacheStorage
 			return false;
 		}
 
-		$config = JFactory::getConfig();
-		$app    = JFactory::getApplication();
+		$app = JFactory::getApplication();
 
-		$this->_persistent = $config->get('redis_persist', true);
+		$this->_persistent = $app->get('redis_persist', true);
 
 		$server = array(
-			'host' => $config->get('redis_server_host', 'localhost'),
-			'port' => $config->get('redis_server_port', 6379),
-			'auth' => $config->get('redis_server_auth', null),
-			'db'   => (int) $config->get('redis_server_db', null),
+			'host' => $app->get('redis_server_host', 'localhost'),
+			'port' => $app->get('redis_server_port', 6379),
+			'auth' => $app->get('redis_server_auth', null),
+			'db'   => (int) $app->get('redis_server_db', null),
 		);
 
 		static::$_redis = new Redis;
@@ -107,14 +106,22 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			throw new JCacheExceptionConnecting('Redis connection failed', 500);
+			if ($app->isAdmin())
+			{
+				JError::raiseWarning(500, 'Redis connection failed');
+			}
+
+			return false;
 		}
 
 		if ($auth == false)
 		{
-			static::$_redis = null;
+			if ($app->isAdmin())
+			{
+				JError::raiseWarning(500, 'Redis authentication failed');
+			}
 
-			throw new JCacheExceptionConnecting('Redis authentication failed', 500);
+			return false;
 		}
 
 		$select = static::$_redis->select($server['db']);
@@ -123,7 +130,12 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			throw new JCacheExceptionConnecting('Redis failed to select database', 500);
+			if ($app->isAdmin())
+			{
+				JError::raiseWarning(500, 'Redis failed to select database');
+			}
+
+			return false;
 		}
 
 		try
@@ -134,7 +146,12 @@ class JCacheStorageRedis extends JCacheStorage
 		{
 			static::$_redis = null;
 
-			throw new JCacheExceptionConnecting('Redis ping failed', 500);
+			if ($app->isAdmin())
+			{
+				JError::raiseWarning(500, 'Redis ping failed');
+			}
+
+			return false;
 		}
 
 		return static::$_redis;

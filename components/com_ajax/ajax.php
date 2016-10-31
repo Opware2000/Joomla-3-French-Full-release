@@ -86,7 +86,7 @@ elseif ($input->get('module'))
 
 		if (is_file($helperFile))
 		{
-			require_once $helperFile;
+			JLoader::register($class, $helperFile);
 
 			if (method_exists($class, $method . 'Ajax'))
 			{
@@ -137,10 +137,11 @@ elseif ($input->get('plugin'))
 	$group      = $input->get('group', 'ajax');
 	JPluginHelper::importPlugin($group);
 	$plugin     = ucfirst($input->get('plugin'));
+	$dispatcher = JEventDispatcher::getInstance();
 
 	try
 	{
-		$results = JFactory::getApplication()->triggerEvent('onAjax' . $plugin);
+		$results = $dispatcher->trigger('onAjax' . $plugin);
 	}
 	catch (Exception $e)
 	{

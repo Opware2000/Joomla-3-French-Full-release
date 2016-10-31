@@ -64,12 +64,6 @@ JFactory::getDocument()->addStyleDeclaration(
 		filter: alpha(opacity = 80);
 		overflow: hidden;
 	}
-	
-	.j-jed-message {
-		margin-bottom: 40px;
-		line-height: 2em;
-		color:#333333;
-	}
 	'
 );
 
@@ -123,9 +117,9 @@ JFactory::getDocument()->addStyleDeclaration(
 				<?php endif; ?>
 				<?php echo JHtml::_('bootstrap.startTabSet', 'myTab'); ?>
 				<?php // Show installation tabs at the start ?>
-				<?php $firstTab = JFactory::getApplication()->triggerEvent('onInstallerViewBeforeFirstTab', array()); ?>
+				<?php $firstTab = JEventDispatcher::getInstance()->trigger('onInstallerViewBeforeFirstTab', array()); ?>
 				<?php // Show installation tabs ?>
-				<?php $tabs = JFactory::getApplication()->triggerEvent('onInstallerAddInstallationTab', array()); ?>
+				<?php $tabs = JEventDispatcher::getInstance()->trigger('onInstallerAddInstallationTab', array()); ?>
 				<?php foreach ($tabs as $tab) : ?>
 					<?php echo JHtml::_('bootstrap.addTab', 'myTab', $tab['name'], $tab['label']); ?>
 					<fieldset class="uploadform">
@@ -134,7 +128,7 @@ JFactory::getDocument()->addStyleDeclaration(
 					<?php echo JHtml::_('bootstrap.endTab'); ?>
 				<?php endforeach; ?>
 				<?php // Show installation tabs at the end ?>
-				<?php $lastTab = JFactory::getApplication()->triggerEvent('onInstallerViewAfterLastTab', array()); ?>
+				<?php $lastTab = JEventDispatcher::getInstance()->trigger('onInstallerViewAfterLastTab', array()); ?>
 				<?php $tabs = array_merge($firstTab, $tabs, $lastTab); ?>
 				<?php if (!$tabs) : ?>
 					<?php JFactory::getApplication()->enqueueMessage(JText::_('COM_INSTALLER_NO_INSTALLATION_PLUGINS_FOUND'), 'warning'); ?>

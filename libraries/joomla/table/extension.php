@@ -26,7 +26,7 @@ class JTableExtension extends JTable
 	 *
 	 * @since   11.1
 	 */
-	public function __construct(JDatabaseDriver $db)
+	public function __construct($db)
 	{
 		parent::__construct('#__extensions', 'extension_id', $db);
 	}
@@ -41,17 +41,6 @@ class JTableExtension extends JTable
 	 */
 	public function check()
 	{
-		try
-		{
-			parent::check();
-		}
-		catch (\Exception $e)
-		{
-			$this->setError($e->getMessage());
-
-			return false;
-		}
-
 		// Check for valid name
 		if (trim($this->name) == '' || trim($this->element) == '')
 		{
@@ -79,15 +68,13 @@ class JTableExtension extends JTable
 	{
 		if (isset($array['params']) && is_array($array['params']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['params']);
+			$registry = new Registry($array['params']);
 			$array['params'] = (string) $registry;
 		}
 
 		if (isset($array['control']) && is_array($array['control']))
 		{
-			$registry = new Registry;
-			$registry->loadArray($array['control']);
+			$registry = new Registry($array['control']);
 			$array['control'] = (string) $registry;
 		}
 

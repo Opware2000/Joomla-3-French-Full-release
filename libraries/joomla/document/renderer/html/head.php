@@ -63,11 +63,10 @@ class JDocumentRendererHtmlHead extends JDocumentRenderer
 		$app->triggerEvent('onBeforeCompileHead');
 
 		// Get line endings
-		$lnEnd        = $document->_getLineEnd();
-		$tab          = $document->_getTab();
-		$tagEnd       = ' />';
-		$buffer       = '';
-		$mediaVersion = $document->getMediaVersion();
+		$lnEnd  = $document->_getLineEnd();
+		$tab    = $document->_getTab();
+		$tagEnd = ' />';
+		$buffer = '';
 
 		// Generate charset when using HTML5 (should happen first)
 		if ($document->isHtml5())
@@ -136,66 +135,29 @@ class JDocumentRendererHtmlHead extends JDocumentRenderer
 		$defaultCssMimes = array('text/css');
 
 		// Generate stylesheet links
-		foreach ($document->_styleSheets as $src => $attribs)
+		foreach ($document->_styleSheets as $strSrc => $strAttr)
 		{
-			// Check if stylesheet uses IE conditional statements.
-			$conditional = isset($attribs['options']) && isset($attribs['options']['conditional']) ? $attribs['options']['conditional'] : null;
+			$buffer .= $tab . '<link href="' . $strSrc . '" rel="stylesheet"';
 
-			// Check if script uses media version.
-			if (strpos($src, '?') === false && isset($attribs['options']) && isset($attribs['options']['version']) && $attribs['options']['version'])
+			if (!is_null($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultCssMimes)))
 			{
-				$src .= '?' . ($attribs['options']['version'] === 'auto' ? $mediaVersion : $attribs['options']['version']);
+				$buffer .= ' type="' . $strAttr['mime'] . '"';
 			}
 
-			$buffer .= $tab;
-
-			// This is for IE conditional statements support.
-			if (!is_null($conditional))
+			if (!is_null($strAttr['media']))
 			{
-				$buffer .= '<!--[if ' . $conditional . ']>';
+				$buffer .= ' media="' . $strAttr['media'] . '"';
 			}
 
-			$buffer .= '<link href="' . $src . '" rel="stylesheet"';
-
-			// Add script tag attributes.
-			foreach ($attribs as $attrib => $value)
+			if (is_array($strAttr['attribs']))
 			{
-				// Don't add the 'options' attribute. This attribute is for internal use (version, conditional, etc).
-				if ($attrib === 'options')
+				if ($temp = ArrayHelper::toString($strAttr['attribs']))
 				{
-					continue;
+					$buffer .= ' ' . $temp;
 				}
-
-				// Don't add type attribute if document is HTML5 and it's a default mime type. 'mime' is for B/C.
-				if (in_array($attrib, array('type', 'mime')) && $document->isHtml5() && in_array($value, $defaultCssMimes))
-				{
-					continue;
-				}
-
-				// Don't add type attribute if document is HTML5 and it's a default mime type. 'mime' is for B/C.
-				if ($attrib === 'mime')
-				{
-					$attrib = 'type';
-				}
-
-				// Add attribute to script tag output.
-				$buffer .= ' ' . htmlspecialchars($attrib, ENT_COMPAT, 'UTF-8');
-
-				// Json encode value if it's an array.
-				$value = !is_scalar($value) ? json_encode($value) : $value;
-
-				$buffer .= '="' . htmlspecialchars($value, ENT_COMPAT, 'UTF-8') . '"';
 			}
 
-			$buffer .= $tagEnd;
-
-			// This is for IE conditional statements support.
-			if (!is_null($conditional))
-			{
-				$buffer .= '<![endif]-->';
-			}
-
-			$buffer .= $lnEnd;
+			$buffer .= $tagEnd . $lnEnd;
 		}
 
 		// Generate stylesheet declarations
@@ -244,6 +206,7 @@ class JDocumentRendererHtmlHead extends JDocumentRenderer
 
 		$defaultJsMimes         = array('text/javascript', 'application/javascript', 'text/x-javascript', 'application/x-javascript');
 		$html5NoValueAttributes = array('defer', 'async');
+		$mediaVersion           = $document->getMediaVersion();
 
 		// Generate script file links
 		foreach ($document->_scripts as $src => $attribs)
@@ -252,8 +215,7 @@ class JDocumentRendererHtmlHead extends JDocumentRenderer
 			$conditional = isset($attribs['options']) && isset($attribs['options']['conditional']) ? $attribs['options']['conditional'] : null;
 
 			// Check if script uses media version.
-			if (isset($attribs['options']['version']) && $attribs['options']['version'] && strpos($src, '?') === false
-				&& ($mediaVersion || $attribs['options']['version'] !== 'auto'))
+			if (strpos($src, '?') === false && isset($attribs['options']) && isset($attribs['options']['version']) && $attribs['options']['version'])
 			{
 				$src .= '?' . ($attribs['options']['version'] === 'auto' ? $mediaVersion : $attribs['options']['version']);
 			}

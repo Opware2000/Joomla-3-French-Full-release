@@ -127,7 +127,7 @@ class FieldsViewField extends JViewLegacy
 		}
 
 		// Load specific component css
-		JHtml::_('stylesheet', $component . '/administrator/fields.css', array('version' => 'auto', 'relative' => true));
+		JHtml::_('stylesheet', $component . '/administrator/fields.css', array(), true);
 
 		// Prepare the toolbar.
 		JToolbarHelper::title(

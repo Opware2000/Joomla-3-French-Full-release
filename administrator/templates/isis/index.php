@@ -27,20 +27,26 @@ $mainPageUri = $frontEndUri->toString();
 // Add JavaScript Frameworks
 JHtml::_('bootstrap.framework');
 
-// Add template js
-JHtml::_('script', 'template.js', array('version' => 'auto', 'relative' => true));
-
-// Add html5 shiv
-JHtml::_('script', 'jui/html5.js', array('version' => 'auto', 'relative' => true, 'conditional' => 'lt IE 9'));
+$this->addScriptVersion($this->baseurl . '/templates/' . $this->template . '/js/template.js');
 
 // Add Stylesheets
-JHtml::_('stylesheet', 'template' . ($this->direction === 'rtl' ? '-rtl' : '') . '.css', array('version' => 'auto', 'relative' => true));
+$this->addStyleSheetVersion($this->baseurl . '/templates/' . $this->template . '/css/template' . ($this->direction == 'rtl' ? '-rtl' : '') . '.css');
 
 // Load specific language related CSS
-JHtml::_('stylesheet', 'language/' . $lang->getTag() . '/' . $lang->getTag() . '.css', array('version' => 'auto', 'relative' => true));
+$languageCss = 'language/' . $lang->getTag() . '/' . $lang->getTag() . '.css';
+
+if (file_exists($languageCss) && filesize($languageCss) > 0)
+{
+	$this->addStyleSheetVersion($languageCss);
+}
 
 // Load custom.css
-JHtml::_('stylesheet', 'custom.css', array('version' => 'auto', 'relative' => true));
+$customCss = 'templates/' . $this->template . '/css/custom.css';
+
+if (file_exists($customCss) && filesize($customCss) > 0)
+{
+	$this->addStyleSheetVersion($customCss);
+}
 
 // Detecting Active Variables
 $option   = $input->get('option', '');
@@ -168,6 +174,7 @@ if ($this->params->get('linkColor'))
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<jdoc:include type="head" />
+	<!--[if lt IE 9]><script src="<?php echo JUri::root(true); ?>/media/jui/js/html5.js"></script><![endif]-->
 </head>
 <body class="admin <?php echo $option . ' view-' . $view . ' layout-' . $layout . ' task-' . $task . ' itemid-' . $itemid; ?>" data-basepath="<?php echo JURI::root(true); ?>">
 <!-- Top Navigation -->

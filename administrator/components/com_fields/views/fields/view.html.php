@@ -49,13 +49,6 @@ class FieldsViewFields extends JViewLegacy
 			return false;
 		}
 
-		// Display a warning if the fields system plugin is disabled
-		if (!JPluginHelper::isEnabled('system', 'fields'))
-		{
-			$link = JRoute::_('index.php?option=com_plugins&task=plugin.edit&extension_id=' . FieldsHelper::getFieldsPluginId());
-			JFactory::getApplication()->enqueueMessage(JText::sprintf('COM_FIELDS_SYSTEM_PLUGIN_NOT_ENABLED', $link), 'warning');
-		}
-
 		$this->context = JFactory::getApplication()->input->getCmd('context');
 		$parts         = FieldsHelper::extract($this->context);
 
@@ -95,7 +88,7 @@ class FieldsViewFields extends JViewLegacy
 		}
 
 		// Get the toolbar object instance
-		$bar = JToolBar::getInstance('toolbar');
+		$bar = JToolbar::getInstance('toolbar');
 
 		// Avoid nonsense situation.
 		if ($component == 'com_fields')
@@ -124,7 +117,7 @@ class FieldsViewFields extends JViewLegacy
 		}
 
 		// Load specific component css
-		JHtml::_('stylesheet', $component . '/administrator/fields.css', array('version' => 'auto', 'relative' => true));
+		JHtml::_('stylesheet', $component . '/administrator/fields.css', array(), true);
 
 		// Prepare the toolbar.
 		JToolbarHelper::title($title, 'puzzle fields ' . substr($component, 4) . ($section ? "-$section" : '') . '-fields');

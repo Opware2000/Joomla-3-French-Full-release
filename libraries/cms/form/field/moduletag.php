@@ -34,7 +34,7 @@ class JFormFieldModuletag extends JFormAbstractlist
 	protected function getOptions()
 	{
 		$options = array();
-		$tags    = array('address', 'article', 'aside', 'details', 'div', 'footer', 'header', 'main', 'nav', 'section', 'summary');
+		$tags = array('div', 'section', 'aside', 'nav', 'address', 'article');
 
 		// Create one new option object for each tag
 		foreach ($tags as $tag)

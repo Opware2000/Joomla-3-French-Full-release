@@ -22,16 +22,14 @@ if (!$value)
 }
 
 $value   = (array) $value;
-$texts   = array();
-$options = JFormAbstractlist::getOptionsFromField($field);
+$texts   = array();$options = JFormAbstractlist::getOptionsFromField($field);
 
-foreach ($options as $optionValue => $optionText)
+foreach ($options as $index => $optionsValue)
 {
-	if (in_array($optionValue, $value))
+	if (in_array($index, $value))
 	{
-		$texts[] = JText::_($optionText);
+		$texts[] = $optionsValue;
 	}
 }
-
 
 echo htmlentities(implode(', ', $texts));

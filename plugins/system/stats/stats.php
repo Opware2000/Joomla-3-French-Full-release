@@ -95,7 +95,7 @@ class PlgSystemStats extends JPlugin
 		$this->loadLanguage();
 
 		JHtml::_('jquery.framework');
-		JHtml::_('script', 'plg_system_stats/stats.js', array('version' => 'auto', 'relative' => true));
+		JHtml::script('plg_system_stats/stats.js', false, true, false);
 	}
 
 	/**

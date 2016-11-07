@@ -12,7 +12,7 @@ defined('JPATH_BASE') or die;
 JLoader::register('ModulesHelper', JPATH_ADMINISTRATOR . '/components/com_modules/helpers/modules.php');
 
 /**
- * ModulesModule Field class for the Joomla Framework.
+ * ModulesPosition Field class for the Joomla Framework.
  *
  * @since  3.4.2
  */

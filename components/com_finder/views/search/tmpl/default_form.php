@@ -38,7 +38,7 @@ jQuery(function() {";
 	*/
 	if ($this->params->get('show_autosuggest', 1))
 	{
-		JHtml::_('script', 'jui/jquery.autocomplete.min.js', array('version' => 'auto', 'relative' => true));
+		JHtml::_('script', 'media/jui/js/jquery.autocomplete.min.js', false, false, false, false, true);
 
 		$script .= "
 	var suggest = jQuery('#q').autocomplete({

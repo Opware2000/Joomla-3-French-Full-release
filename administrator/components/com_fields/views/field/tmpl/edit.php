@@ -49,8 +49,6 @@ JFactory::getDocument()->addScriptDeclaration('
 		<div class="row-fluid">
 			<div class="span9">
 				<?php echo $this->form->renderField('type'); ?>
-				<?php echo $this->form->renderField('label'); ?>
-				<?php echo $this->form->renderField('description'); ?>
 				<?php echo $this->form->renderField('required'); ?>
 				<?php echo $this->form->renderField('default_value'); ?>
 
@@ -60,6 +58,7 @@ JFactory::getDocument()->addScriptDeclaration('
 					<?php endforeach; ?>
 				<?php endforeach; ?>
 
+				<?php echo $this->form->renderField('description'); ?>
 			</div>
 			<div class="span3">
 				<?php $this->set('fields',

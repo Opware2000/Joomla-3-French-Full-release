@@ -437,7 +437,7 @@ abstract class JHtmlFilter
 			// Load the CSS/JS resources.
 			if ($loadMedia)
 			{
-				JHtml::_('stylesheet', 'com_finder/dates.css', array('version' => 'auto', 'relative' => true));
+				JHtml::stylesheet('com_finder/dates.css', false, true, false);
 			}
 
 			// Open the widget.

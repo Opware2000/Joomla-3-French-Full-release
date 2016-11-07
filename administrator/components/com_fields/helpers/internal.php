@@ -99,8 +99,6 @@ class FieldsHelperInternal
 	 */
 	public static function loadPlugins()
 	{
-		jimport('joomla.filesystem.folder');
-
 		foreach (JFolder::listFolderTree(JPATH_PLUGINS . '/fields', '.', 1) as $folder)
 		{
 			if (!JPluginHelper::isEnabled('fields', $folder['name']))

@@ -16,7 +16,7 @@ if (!key_exists('field', $displayData))
 $field = $displayData['field'];
 $label = $field->label;
 $value = $field->value;
-$class = $field->params->get('render_class');
+$class = $field->render_class;
 
 if (!$value)
 {

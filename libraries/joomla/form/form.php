@@ -896,7 +896,7 @@ class JForm
 	 *
 	 * @param   string  $group  The dot-separated form group path for the group to remove.
 	 *
-	 * @return  boolean  True on success.
+	 * @return  boolean  True on success, false otherwise.
 	 *
 	 * @since   11.1
 	 * @throws  UnexpectedValueException
@@ -916,9 +916,11 @@ class JForm
 		{
 			$dom = dom_import_simplexml($element);
 			$dom->parentNode->removeChild($dom);
+
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	/**
@@ -2109,7 +2111,7 @@ class JForm
 			}
 
 			// Instantiate the form.
-			$forms[$name] = new static($name, $options);
+			$forms[$name] = new JForm($name, $options);
 
 			// Load the data.
 			if (substr($data, 0, 1) == '<')

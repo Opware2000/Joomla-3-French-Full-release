@@ -29,7 +29,7 @@
 				},
 				onError: function(xhr)
 				{
-					// Do nothing
+					Joomla.renderMessages(Joomla.ajaxErrorsMessages(xhr));
 				}
 			});
 		}, keepaliveInterval);

@@ -132,14 +132,11 @@ class InstallationControllerInstallEmail extends JControllerBase
 
 		try
 		{
-			if (!$mail->Send())
-			{
-				$app->enqueueMessage(JText::_('INSTL_EMAIL_NOT_SENT'), 'error');
-			}
+			$mail->Send();
 		}
 		catch (Exception $e)
 		{
-			$app->enqueueMessage(JText::_('INSTL_EMAIL_NOT_SENT'), 'error');
+			$app->enqueueMessage(JText::_('INSTL_EMAIL_NOT_SENT'), 'warning');
 		}
 
 		$app->sendJsonResponse($r);

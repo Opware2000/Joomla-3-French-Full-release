@@ -9,8 +9,6 @@
 
 defined('JPATH_PLATFORM') or die;
 
-use Joomla\Application\AbstractApplication;
-
 /**
  * Joomla Platform Base Controller Class
  *
@@ -21,7 +19,7 @@ abstract class JControllerBase implements JController
 	/**
 	 * The application object.
 	 *
-	 * @var    AbstractApplication
+	 * @var    JApplicationBase
 	 * @since  12.1
 	 */
 	protected $app;
@@ -37,12 +35,12 @@ abstract class JControllerBase implements JController
 	/**
 	 * Instantiate the controller.
 	 *
-	 * @param   JInput               $input  The input object.
-	 * @param   AbstractApplication  $app    The application object.
+	 * @param   JInput            $input  The input object.
+	 * @param   JApplicationBase  $app    The application object.
 	 *
 	 * @since  12.1
 	 */
-	public function __construct(JInput $input = null, AbstractApplication $app = null)
+	public function __construct(JInput $input = null, JApplicationBase $app = null)
 	{
 		// Setup dependencies.
 		$this->app = isset($app) ? $app : $this->loadApplication();
@@ -52,7 +50,7 @@ abstract class JControllerBase implements JController
 	/**
 	 * Get the application object.
 	 *
-	 * @return  AbstractApplication  The application object.
+	 * @return  JApplicationBase  The application object.
 	 *
 	 * @since   12.1
 	 */
@@ -114,7 +112,7 @@ abstract class JControllerBase implements JController
 	/**
 	 * Load the application object.
 	 *
-	 * @return  AbstractApplication  The application object.
+	 * @return  JApplicationBase  The application object.
 	 *
 	 * @since   12.1
 	 */

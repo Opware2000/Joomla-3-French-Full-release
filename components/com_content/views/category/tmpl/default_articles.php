@@ -31,20 +31,11 @@ if (!empty($this->items))
 		}
 	}
 }
-
-// For B/C we also add the css classes inline. This will be removed in 4.0.
-JFactory::getDocument()->addStyleDeclaration("
-.hide { display: none; }
-.table-noheader { border-collapse: collapse; }
-.table-noheader thead { display: none; }
-");
-
-$tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 ?>
+
 <form action="<?php echo htmlspecialchars(JUri::getInstance()->toString()); ?>" method="post" name="adminForm" id="adminForm" class="form-inline">
-<?php if ($this->params->get('filter_field') != 'hide' || $this->params->get('show_pagination_limit')) : ?>
+<?php if ($this->params->get('show_headings') || $this->params->get('filter_field') != 'hide' || $this->params->get('show_pagination_limit')) :?>
 	<fieldset class="filters btn-toolbar clearfix">
-		<legend class="hide"><?php echo JText::_('COM_CONTENT_FORM_FILTER_LEGEND'); ?></legend>
 		<?php if ($this->params->get('filter_field') != 'hide') :?>
 			<div class="btn-group">
 				<?php if ($this->params->get('filter_field') != 'tag') :?>
@@ -74,19 +65,14 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 		<input type="hidden" name="limitstart" value="" />
 		<input type="hidden" name="task" value="" />
 	</fieldset>
-
-	<div class="control-group hide pull-right">
-		<div class="controls">
-			<button type="submit" name="filter_submit" class="btn btn-primary"><?php echo JText::_('COM_CONTENT_FORM_FILTER_SUBMIT'); ?></button>
-		</div>
-	</div>
-
 <?php endif; ?>
 
 <?php if (empty($this->items)) : ?>
+
 	<?php if ($this->params->get('show_no_articles', 1)) : ?>
 		<p><?php echo JText::_('COM_CONTENT_NO_ARTICLES'); ?></p>
 	<?php endif; ?>
+
 <?php else : ?>
 
 	<table class="category table table-striped table-bordered table-hover">
@@ -111,11 +97,11 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 			?>
 			<thead>
 			<tr>
-				<th scope="col" id="categorylist_header_title">
+				<th id="categorylist_header_title">
 					<?php echo JHtml::_('grid.sort', 'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?>
 				</th>
 				<?php if ($date = $this->params->get('list_show_date')) : ?>
-					<th scope="col" id="categorylist_header_date">
+					<th id="categorylist_header_date">
 						<?php if ($date == "created") : ?>
 							<?php echo JHtml::_('grid.sort', 'COM_CONTENT_' . $date . '_DATE', 'a.created', $listDirn, $listOrder); ?>
 						<?php elseif ($date == "modified") : ?>
@@ -126,27 +112,27 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 					</th>
 				<?php endif; ?>
 				<?php if ($this->params->get('list_show_author')) : ?>
-					<th scope="col" id="categorylist_header_author">
+					<th id="categorylist_header_author">
 						<?php echo JHtml::_('grid.sort', 'JAUTHOR', 'author', $listDirn, $listOrder); ?>
 					</th>
 				<?php endif; ?>
 				<?php if ($this->params->get('list_show_hits')) : ?>
-					<th scope="col" id="categorylist_header_hits">
+					<th id="categorylist_header_hits">
 						<?php echo JHtml::_('grid.sort', 'JGLOBAL_HITS', 'a.hits', $listDirn, $listOrder); ?>
 					</th>
 				<?php endif; ?>
 				<?php if (($this->params->get('list_show_votes', 0)) && ($this->vote)) : ?>
-					<th scope="col" id="categorylist_header_votes">
+					<th id="categorylist_header_votes">
 						<?php echo JHtml::_('grid.sort', 'COM_CONTENT_VOTES', 'rating_count', $listDirn, $listOrder); ?>
 					</th>
 				<?php endif; ?>
 				<?php if (($this->params->get('list_show_ratings', 0)) && ($this->vote)) : ?>
-					<th scope="col" id="categorylist_header_ratings">
+					<th id="categorylist_header_ratings">
 						<?php echo JHtml::_('grid.sort', 'COM_CONTENT_RATINGS', 'rating', $listDirn, $listOrder); ?>
 					</th>
 				<?php endif; ?>
 				<?php if ($isEditable) : ?>
-					<th scope="col" id="categorylist_header_edit"><?php echo JText::_('COM_CONTENT_EDIT_ITEM'); ?></th>
+					<th id="categorylist_header_edit"><?php echo JText::_('COM_CONTENT_EDIT_ITEM'); ?></th>
 				<?php endif; ?>
 			</tr>
 			</thead>
@@ -158,7 +144,7 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 			<?php else: ?>
 				<tr class="cat-list-row<?php echo $i % 2; ?>" >
 			<?php endif; ?>
-			<td headers="categorylist_header_title" class="list-title">
+			<td <?php echo $headerTitle; ?> class="list-title">
 				<?php if (in_array($article->access, $this->user->getAuthorisedViewLevels())) : ?>
 					<a href="<?php echo JRoute::_(ContentHelperRoute::getArticleRoute($article->slug, $article->catid, $article->language)); ?>">
 						<?php echo $this->escape($article->title); ?>
@@ -217,7 +203,7 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 				<?php endif; ?>
 			</td>
 			<?php if ($this->params->get('list_show_date')) : ?>
-				<td headers="categorylist_header_date" class="list-date small">
+				<td <?php echo $headerDate; ?> class="list-date small">
 					<?php
 					echo JHtml::_(
 						'date', $article->displayDate,
@@ -226,7 +212,7 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 				</td>
 			<?php endif; ?>
 			<?php if ($this->params->get('list_show_author', 1)) : ?>
-				<td headers="categorylist_header_author" class="list-author">
+				<td <?php echo $headerAuthor; ?> class="list-author">
 					<?php if (!empty($article->author) || !empty($article->created_by_alias)) : ?>
 						<?php $author = $article->author ?>
 						<?php $author = ($article->created_by_alias ? $article->created_by_alias : $author); ?>
@@ -239,7 +225,7 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 				</td>
 			<?php endif; ?>
 			<?php if ($this->params->get('list_show_hits', 1)) : ?>
-				<td headers="categorylist_header_hits" class="list-hits">
+				<td <?php echo $headerHits; ?> class="list-hits">
 							<span class="badge badge-info">
 								<?php echo JText::sprintf('JGLOBAL_HITS_COUNT', $article->hits); ?>
 							</span>
@@ -260,7 +246,7 @@ $tableClass = $this->params->get('show_headings') != 1 ? ' table-noheader' : '';
 				</td>
 			<?php endif; ?>
 			<?php if ($isEditable) : ?>
-				<td headers="categorylist_header_edit" class="list-edit">
+				<td <?php echo $headerEdit; ?> class="list-edit">
 					<?php if ($article->params->get('access-edit')) : ?>
 						<?php echo JHtml::_('icon.edit', $article, $params); ?>
 					<?php endif; ?>

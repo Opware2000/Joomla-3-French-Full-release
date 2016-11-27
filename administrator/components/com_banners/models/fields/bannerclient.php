@@ -9,6 +9,8 @@
 
 defined('JPATH_BASE') or die;
 
+JFormHelper::loadFieldClass('list');
+
 JLoader::register('BannersHelper', JPATH_ADMINISTRATOR . '/components/com_banners/helpers/banners.php');
 
 /**
@@ -16,7 +18,7 @@ JLoader::register('BannersHelper', JPATH_ADMINISTRATOR . '/components/com_banner
  *
  * @since  1.6
  */
-class JFormFieldBannerClient extends JFormAbstractlist
+class JFormFieldBannerClient extends JFormFieldList
 {
 	/**
 	 * The form field type.

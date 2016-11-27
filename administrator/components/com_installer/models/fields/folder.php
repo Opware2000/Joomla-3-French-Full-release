@@ -9,6 +9,8 @@
 
 defined('_JEXEC') or die;
 
+JFormHelper::loadFieldClass('list');
+
 JLoader::register('InstallerHelper', JPATH_ADMINISTRATOR . '/components/com_installer/helpers/installer.php');
 
 /**
@@ -16,7 +18,7 @@ JLoader::register('InstallerHelper', JPATH_ADMINISTRATOR . '/components/com_inst
  *
  * @since  3.5
  */
-class JFormFieldFolder extends JFormAbstractlist
+class JFormFieldFolder extends JFormFieldList
 {
 	/**
 	 * The form field type.

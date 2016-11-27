@@ -9,14 +9,16 @@
 
 defined('JPATH_BASE') or die;
 
+JFormHelper::loadFieldClass('list');
+
 JLoader::register('ModulesHelper', JPATH_ADMINISTRATOR . '/components/com_modules/helpers/modules.php');
 
 /**
- * ModulesModule Field class for the Joomla Framework.
+ * ModulesPosition Field class for the Joomla Framework.
  *
  * @since  3.4.2
  */
-class JFormFieldModulesModule extends JFormAbstractlist
+class JFormFieldModulesModule extends JFormFieldList
 {
 	/**
 	 * The form field type.

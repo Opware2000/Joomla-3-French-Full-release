@@ -137,11 +137,7 @@ class JDatabaseDriverPostgresql extends JDatabaseDriver
 			throw new JDatabaseExceptionConnecting('Error connecting to PGSQL database.');
 		}
 
-		if (function_exists('pg_set_error_verbosity'))
-		{
-			pg_set_error_verbosity($this->connection, PGSQL_ERRORS_DEFAULT);
-		}
-
+		pg_set_error_verbosity($this->connection, PGSQL_ERRORS_DEFAULT);
 		pg_query($this->connection, 'SET standard_conforming_strings=off');
 		pg_query($this->connection, 'SET escape_string_warning=off');
 	}
@@ -1507,18 +1503,9 @@ class JDatabaseDriverPostgresql extends JDatabaseDriver
 	 * @return  integer  The SQL Error number
 	 *
 	 * @since   3.4.6
-	 *
-	 * @throws  \JDatabaseExceptionExecuting  Thrown if the global cursor is false indicating a query failed
 	 */
 	protected function getErrorNumber()
 	{
-		if ($this->cursor === false)
-		{
-			$this->errorMsg = pg_last_error($this->connection);
-
-			throw new JDatabaseExceptionExecuting($this->sql, $this->errorMsg);
-		}
-
 		return (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
 	}
 

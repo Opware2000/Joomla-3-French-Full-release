@@ -350,10 +350,7 @@ class MenusModelItems extends JModelList
 				}
 			}
 
-			if (!empty($types))
-			{
-				$query->where('a.menutype IN(' . implode(',', $types) . ')');
-			}
+			$query->where('a.menutype IN(' . implode(',', $types) . ')');
 		}
 		// Default behavior => load all items from a specific menu
 		elseif (strlen($menuType))
@@ -375,12 +372,8 @@ class MenusModelItems extends JModelList
 		// Implement View Level Access
 		if (!$user->authorise('core.admin'))
 		{
-			$groups = $user->getAuthorisedViewLevels();
-
-			if (!empty($groups))
-			{
-				$query->where('a.access IN (' . implode(',', $groups) . ')');
-			}
+			$groups = implode(',', $user->getAuthorisedViewLevels());
+			$query->where('a.access IN (' . $groups . ')');
 		}
 
 		// Filter on the level.

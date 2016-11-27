@@ -55,14 +55,16 @@ class MenusViewItems extends JViewLegacy
 		$this->filterForm    = $this->get('FilterForm');
 		$this->activeFilters = $this->get('ActiveFilters');
 
-		MenusHelper::addSubmenu('items');
+		// We don't need toolbar in the modal window.
+		if ($this->getLayout() !== 'modal')
+		{
+			MenusHelper::addSubmenu('items');
+		}
 
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
 		{
-			JError::raiseError(500, implode("\n", $errors));
-
-			return false;
+			throw new JViewGenericdataexception(implode("\n", $errors), 500);
 		}
 
 		$this->ordering = array();
@@ -240,7 +242,7 @@ class MenusViewItems extends JViewLegacy
 		}
 
 		// Allow a system plugin to insert dynamic menu types to the list shown in menus:
-		JEventDispatcher::getInstance()->trigger('onBeforeRenderMenuItems', array($this));
+		JFactory::getApplication()->triggerEvent('onBeforeRenderMenuItems', array($this));
 
 		parent::display($tpl);
 	}

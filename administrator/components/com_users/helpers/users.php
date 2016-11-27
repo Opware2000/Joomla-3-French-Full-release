@@ -67,24 +67,20 @@ class UsersHelper
 				$vName == 'categories' || $extension == 'com_users'
 			);
 		}
-	}
 
-	/**
-	 * Gets a list of the actions that can be performed.
-	 *
-	 * @return  JObject
-	 *
-	 * @deprecated  3.2  Use JHelperContent::getActions() instead
-	 */
-	public static function getActions()
-	{
-		// Log usage of deprecated function
-		JLog::add(__METHOD__ . '() is deprecated, use JHelperContent::getActions() with new arguments order instead.', JLog::WARNING, 'deprecated');
-
-		// Get list of actions
-		$result = JHelperContent::getActions('com_users');
-
-		return $result;
+		if (JComponentHelper::isEnabled('com_fields') && JComponentHelper::getParams('com_users')->get('custom_fields_enable', '1'))
+		{
+			JHtmlSidebar::addEntry(
+				JText::_('JGLOBAL_FIELDS'),
+				'index.php?option=com_fields&context=com_users.user',
+				$vName == 'fields.user'
+			);
+			JHtmlSidebar::addEntry(
+				JText::_('JGLOBAL_FIELD_GROUPS'),
+				'index.php?option=com_categories&extension=com_users.user.fields',
+				$vName == 'categories.user'
+			);
+		}
 	}
 
 	/**

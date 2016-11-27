@@ -9,6 +9,8 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\Event\Event;
+
 /**
  * TinyMCE Editor Plugin
  *
@@ -47,8 +49,8 @@ class PlgEditorTinymce extends JPlugin
 	public function onInit()
 	{
 		JHtml::_('behavior.polyfill', array('event'), 'lt IE 9');
-		JHtml::_('script', $this->_basePath . '/tinymce.min.js', false, false, false, false, false);
-		JHtml::_('script', 'system/tinymce-init.min.js', false, true);
+		JHtml::_('script', $this->_basePath . '/tinymce.min.js', array('version' => 'auto'));
+		JHtml::_('script', 'system/tinymce-init.min.js', array('version' => 'auto', 'relative' => true));
 	}
 
 	/**
@@ -736,8 +738,7 @@ class PlgEditorTinymce extends JPlugin
 
 		if (!empty($btnsNames))
 		{
-			$modalFix = JHtml::_('script', 'system/tiny-close.min.js', false, true, true, false, true);
-			JFactory::getDocument()->addScript($modalFix, "text/javascript", true, false);
+			JHtml::_('script', 'system/tiny-close.min.js', array('version' => 'auto', 'relative' => true), array('defer' => 'defer'));
 		}
 
 		// Drag and drop Images
@@ -952,7 +953,16 @@ class PlgEditorTinymce extends JPlugin
 	private function tinyButtons($name, $excluded)
 	{
 		// Get the available buttons
-		$buttons = $this->_subject->getButtons($name, $excluded);
+		$buttonsEvent = new Event(
+			'getButtons',
+			[
+				'name'    => $this->_name,
+				'buttons' => $excluded,
+			]
+		);
+
+		$buttonsResult = $this->getDispatcher()->dispatch('getButtons', $buttonsEvent);
+		$buttons       = $buttonsResult['result'];
 
 		// Init the arrays for the buttons
 		$tinyBtns  = array();

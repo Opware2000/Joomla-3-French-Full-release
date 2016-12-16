@@ -360,7 +360,7 @@ abstract class AKAbstractObject
 				array_shift($this->_errors);
 			}
 		}
-		$this->_errors[] = $error;
+		array_push($this->_errors, $error);
 	}
 
 	/**
@@ -378,7 +378,7 @@ abstract class AKAbstractObject
 			}
 		}
 
-		$this->_warnings[] = $warning;
+		array_push($this->_warnings, $warning);
 	}
 
 	/**

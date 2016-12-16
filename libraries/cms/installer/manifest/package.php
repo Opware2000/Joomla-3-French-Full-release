@@ -41,14 +41,6 @@ class JInstallerManifestPackage extends JInstallerManifest
 	public $scriptfile = '';
 
 	/**
-	 * Flag if the package blocks individual child extensions from being uninstalled
-	 *
-	 * @var    boolean
-	 * @since  __DEPLOY_VERSION__
-	 */
-	public $blockChildUninstall = false;
-
-	/**
 	 * Apply manifest data from a SimpleXMLElement to the object.
 	 *
 	 * @param   SimpleXMLElement  $xml  Data to load
@@ -70,16 +62,6 @@ class JInstallerManifestPackage extends JInstallerManifest
 		$this->packagerurl = (string) $xml->packagerurl;
 		$this->scriptfile  = (string) $xml->scriptfile;
 		$this->version     = (string) $xml->version;
-
-		if (isset($xml->blockChildUninstall))
-		{
-			$value = (string) $xml->blockChildUninstall;
-
-			if ($value === '1' || $value === 'true')
-			{
-				$this->blockChildUninstall = true;
-			}
-		}
 
 		if (isset($xml->files->file) && count($xml->files->file))
 		{

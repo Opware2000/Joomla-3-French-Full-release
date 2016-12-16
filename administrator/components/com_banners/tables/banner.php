@@ -22,15 +22,14 @@ class BannersTableBanner extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  &$db  Database connector object
+	 * @param   JDatabaseDriver  $db  Database connector object
 	 *
 	 * @since   1.5
 	 */
-	public function __construct(&$db)
+	public function __construct(JDatabaseDriver $db)
 	{
+		$this->typeAlias = 'com_banners.banner';
 		parent::__construct('#__banners', 'id', $db);
-
-		JTableObserverContenthistory::createObserver($this, array('typeAlias' => 'com_banners.banner'));
 
 		$this->created = JFactory::getDate()->toSql();
 		$this->setColumnAlias('published', 'state');
@@ -61,6 +60,17 @@ class BannersTableBanner extends JTable
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		// Set name
 		$this->name = htmlspecialchars_decode($this->name, ENT_QUOTES);
 
@@ -196,19 +206,19 @@ class BannersTableBanner extends JTable
 					$this->reset = $this->_db->getNullDate();
 					break;
 				case 2:
-					$date = JFactory::getDate('+1 year ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 year ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 3:
-					$date = JFactory::getDate('+1 month ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 month ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 4:
-					$date = JFactory::getDate('+7 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+7 day ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 5:
-					$date = JFactory::getDate('+1 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 day ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 			}

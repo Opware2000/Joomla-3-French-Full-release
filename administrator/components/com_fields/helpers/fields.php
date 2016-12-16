@@ -149,8 +149,7 @@ class FieldsHelper
 					 * On before field prepare
 					 * Event allow plugins to modfify the output of the field before it is prepared
 					 */
-					$dispatcher = JEventDispatcher::getInstance();
-					$dispatcher->trigger('onFieldBeforePrepare', array($context, $item, &$field));
+					JFactory::getApplication()->triggerEvent('onFieldBeforePrepare', array($context, $item, &$field));
 
 					// Prepare the value from the type layout
 					$value = self::render($context, 'field.prepare.' . $field->type, array('field' => $field));
@@ -165,7 +164,7 @@ class FieldsHelper
 					 * On after field render
 					 * Event allow plugins to modfify the output of the prepared field
 					 */
-					$dispatcher->trigger('onFieldAfterPrepare', array($context, $item, $field, &$value));
+					JFactory::getApplication()->triggerEvent('onFieldAfterPrepare', array($context, $item, $field, &$value));
 					$field->value = $value;
 				}
 

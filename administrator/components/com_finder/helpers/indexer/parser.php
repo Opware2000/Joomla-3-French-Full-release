@@ -75,37 +75,41 @@ abstract class FinderIndexerParser
 	 */
 	public function parse($input)
 	{
-		// If the input is less than 2KB we can parse it in one go.
-		if (strlen($input) <= 2048)
-		{
-			return $this->process($input);
-		}
-
-		// Input is longer than 2Kb so parse it in chunks of 2Kb or less.
-		$start = 0;
-		$end = strlen($input);
-		$chunk = 2048;
 		$return = null;
 
-		while ($start < $end)
+		// Parse the input in batches if bigger than 2KB.
+		if (strlen($input) > 2048)
 		{
-			// Setup the string.
-			$string = substr($input, $start, $chunk);
+			$start = 0;
+			$end = strlen($input);
+			$chunk = 2048;
 
-			// Find the last space character if we aren't at the end.
-			$ls = (($start + $chunk) < $end ? strrpos($string, ' ') : false);
-
-			// Truncate to the last space character.
-			if ($ls !== false)
+			while ($start < $end)
 			{
-				$string = substr($string, 0, $ls);
+				// Setup the string.
+				$string = substr($input, $start, $chunk);
+
+				// Find the last space character if we aren't at the end.
+				$ls = (($start + $chunk) < $end ? strrpos($string, ' ') : false);
+
+				// Truncate to the last space character.
+				if ($ls !== false)
+				{
+					$string = substr($string, 0, $ls);
+				}
+
+				// Adjust the start position for the next iteration.
+				$start += ($ls !== false ? ($ls + 1 - $chunk) + $chunk : $chunk);
+
+				// Parse the chunk.
+				$return .= $this->process($string);
 			}
-
-			// Adjust the start position for the next iteration.
-			$start += ($ls !== false ? ($ls + 1 - $chunk) + $chunk : $chunk);
-
+		}
+		// The input is less than 2KB so we can parse it efficiently.
+		else
+		{
 			// Parse the chunk.
-			$return .= $this->process($string);
+			$return .= $this->process($input);
 		}
 
 		return $return;

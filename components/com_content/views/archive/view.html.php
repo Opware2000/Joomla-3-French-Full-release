@@ -45,8 +45,8 @@ class ContentViewArchive extends JViewLegacy
 
 		foreach ($items as $item)
 		{
-			$item->catslug     = $item->category_alias ? ($item->catid . ':' . $item->category_alias) : $item->catid;
-			$item->parent_slug = $item->parent_alias ? ($item->parent_id . ':' . $item->parent_alias) : $item->parent_id;
+			$item->catslug     = ($item->category_alias) ? ($item->catid . ':' . $item->category_alias) : $item->catid;
+			$item->parent_slug = ($item->parent_alias) ? ($item->parent_id . ':' . $item->parent_alias) : $item->parent_id;
 
 			// No link for ROOT category
 			if ($item->parent_alias == 'root')
@@ -56,8 +56,6 @@ class ContentViewArchive extends JViewLegacy
 
 			$item->event = new stdClass;
 
-			$dispatcher = JEventDispatcher::getInstance();
-
 			// Old plugins: Ensure that text property is available
 			if (!isset($item->text))
 			{
@@ -65,18 +63,18 @@ class ContentViewArchive extends JViewLegacy
 			}
 
 			JPluginHelper::importPlugin('content');
-			$dispatcher->trigger('onContentPrepare', array ('com_content.archive', &$item, &$item->params, 0));
+			JFactory::getApplication()->triggerEvent('onContentPrepare', array ('com_content.archive', &$item, &$item->params, 0));
 
 			// Old plugins: Use processed text as introtext
 			$item->introtext = $item->text;
 
-			$results = $dispatcher->trigger('onContentAfterTitle', array('com_content.archive', &$item, &$item->params, 0));
+			$results = JFactory::getApplication()->triggerEvent('onContentAfterTitle', array('com_content.archive', &$item, &$item->params, 0));
 			$item->event->afterDisplayTitle = trim(implode("\n", $results));
 
-			$results = $dispatcher->trigger('onContentBeforeDisplay', array('com_content.archive', &$item, &$item->params, 0));
+			$results = JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array('com_content.archive', &$item, &$item->params, 0));
 			$item->event->beforeDisplayContent = trim(implode("\n", $results));
 
-			$results = $dispatcher->trigger('onContentAfterDisplay', array('com_content.archive', &$item, &$item->params, 0));
+			$results = JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array('com_content.archive', &$item, &$item->params, 0));
 			$item->event->afterDisplayContent = trim(implode("\n", $results));
 		}
 
@@ -136,8 +134,8 @@ class ContentViewArchive extends JViewLegacy
 		$this->params     = &$params;
 		$this->user       = &$user;
 		$this->pagination = &$pagination;
-		$this->pagination->setAdditionalUrlParam('month', $state->get('filter.month'));
-		$this->pagination->setAdditionalUrlParam('year', $state->get('filter.year'));
+		$this->pagination->setAdditionalUrlParam("month", $state->get('filter.month'));
+		$this->pagination->setAdditionalUrlParam("year", $state->get('filter.year'));
 
 		$this->_prepareDocument();
 

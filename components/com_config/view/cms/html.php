@@ -126,7 +126,8 @@ abstract class ConfigViewCmsHtml extends JViewHtml
 		if ($this->_template != false)
 		{
 			// Unset so as not to introduce into template scope
-			unset($tpl, $file);
+			unset($tpl);
+			unset($file);
 
 			// Never allow a 'this' property
 			if (isset($this->this))

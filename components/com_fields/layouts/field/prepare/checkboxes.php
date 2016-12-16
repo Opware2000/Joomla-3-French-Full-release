@@ -13,23 +13,23 @@ if (!key_exists('field', $displayData))
 	return;
 }
 
-$field      = $displayData['field'];
-$fieldValue = $field->value;
+$field = $displayData['field'];
+$value = $field->value;
 
-if ($fieldValue === '' || $fieldValue === null)
+if ($value === '' || $value === null)
 {
 	return;
 }
 
-$fieldValue = (array) $fieldValue;
-$texts      = array();
-$options    = JFormAbstractlist::getOptionsFromField($field);
+$value   = (array) $value;
+$texts   = array();
+$options = JFormAbstractlist::getOptionsFromField($field);
 
-foreach ($options as $value => $name)
+foreach ($options as $optionValue => $optionText)
 {
-	if (in_array((string) $value, $fieldValue))
+	if (in_array((string) $optionValue, $value))
 	{
-		$texts[] = JText::_($name);
+		$texts[] = JText::_($optionText);
 	}
 }
 

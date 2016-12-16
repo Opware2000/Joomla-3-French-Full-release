@@ -17,6 +17,14 @@ defined('JPATH_PLATFORM') or die;
 class JInstallerAdapterPackage extends JInstallerAdapter
 {
 	/**
+	 * Flag if the internal event callback has been registered
+	 *
+	 * @var    boolean
+	 * @since  __DEPLOY_VERSION__
+	 */
+	private static $eventRegistered = false;
+
+	/**
 	 * An array of extension IDs for each installed extension
 	 *
 	 * @var    array
@@ -115,12 +123,11 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 			);
 		}
 
-		$dispatcher = JFactory::getApplication()->getDispatcher();
-
 		// Add a callback for the `onExtensionAfterInstall` event so we can receive the installed extension ID
-		if (!$dispatcher->hasListener([$this, 'onExtensionAfterInstall'], 'onExtensionAfterInstall'))
+		if (!self::$eventRegistered)
 		{
-			$dispatcher->addListener('onExtensionAfterInstall', [$this, 'onExtensionAfterInstall']);
+			self::$eventRegistered = true;
+			JEventDispatcher::getInstance()->register('onExtensionAfterInstall', array($this, 'onExtensionAfterInstall'));
 		}
 
 		foreach ($this->getManifest()->files->children() as $child)
@@ -536,6 +543,17 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 			return false;
 		}
 
+		/*
+		 * Does this extension have a parent package?
+		 * If so, check if the package disallows individual extensions being uninstalled if the package is not being uninstalled
+		 */
+		if ($row->package_id && !$this->parent->isPackageUninstall() && !$this->canUninstallPackageChild($row->package_id))
+		{
+			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_CANNOT_UNINSTALL_CHILD_OF_PACKAGE', $row->name), JLog::WARNING, 'jerror');
+
+			return false;
+		}
+
 		$manifestFile = JPATH_MANIFESTS . '/packages/' . $row->get('element') . '.xml';
 		$manifest = new JInstallerManifestPackage($manifestFile);
 
@@ -587,7 +605,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 				$this->parent->manifestClass = new $classname($this);
 
 				// And set this so we can copy it later
-				$this->manifest_script = $manifestScript;
+				$this->set('manifest_script', $manifestScript);
 			}
 		}
 
@@ -613,6 +631,8 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		foreach ($manifest->filelist as $extension)
 		{
 			$tmpInstaller = new JInstaller;
+			$tmpInstaller->setPackageUninstall(true);
+
 			$id = $this->_getExtensionId($extension->type, $extension->id, $extension->client, $extension->group);
 			$client = JApplicationHelper::getClientInfo($extension->client, true);
 
@@ -737,4 +757,15 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 			return false;
 		}
 	}
+}
+
+/**
+ * Deprecated class placeholder. You should use JInstallerAdapterPackage instead.
+ *
+ * @since       3.1
+ * @deprecated  4.0
+ * @codeCoverageIgnore
+ */
+class JInstallerPackage extends JInstallerAdapterPackage
+{
 }

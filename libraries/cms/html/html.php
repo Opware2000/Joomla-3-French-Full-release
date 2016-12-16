@@ -143,20 +143,25 @@ abstract class JHtml
 	/**
 	 * Registers a function to be called with a specific key
 	 *
-	 * @param   string    $key       The name of the key
-	 * @param   callable  $function  Function or method
+	 * @param   string  $key       The name of the key
+	 * @param   string  $function  Function or method
 	 *
 	 * @return  boolean  True if the function is callable
 	 *
 	 * @since   1.6
 	 */
-	public static function register($key, callable $function)
+	public static function register($key, $function)
 	{
 		list($key) = static::extract($key);
 
-		static::$registry[$key] = $function;
+		if (is_callable($function))
+		{
+			static::$registry[$key] = $function;
 
-		return true;
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -210,8 +215,13 @@ abstract class JHtml
 	 * @since   1.6
 	 * @throws  InvalidArgumentException
 	 */
-	protected static function call(callable $function, $args)
+	protected static function call($function, $args)
 	{
+		if (!is_callable($function))
+		{
+			throw new InvalidArgumentException('Function not supported', 500);
+		}
+
 		// PHP 5.3 workaround
 		$temp = array();
 
@@ -707,7 +717,7 @@ abstract class JHtml
 			{
 				return $includes[0];
 			}
-
+			
 			return $includes;
 		}
 

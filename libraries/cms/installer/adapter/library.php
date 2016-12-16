@@ -317,9 +317,8 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		$name = (string) $this->getManifest()->name;
 		$name = JFilterInput::getInstance()->clean($name, 'string');
 		$element = str_replace('.xml', '', basename($this->parent->getPath('manifest')));
-
-		$this->name    = $name;
-		$this->element = $element;
+		$this->set('name', $name);
+		$this->set('element', $element);
 
 		// We don't want to compromise this instance!
 		$installer = new JInstaller;
@@ -375,6 +374,17 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		if ($row->protected)
 		{
 			JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_WARNCORELIBRARY'), JLog::WARNING, 'jerror');
+
+			return false;
+		}
+
+		/*
+		 * Does this extension have a parent package?
+		 * If so, check if the package disallows individual extensions being uninstalled if the package is not being uninstalled
+		 */
+		if ($row->package_id && !$this->parent->isPackageUninstall() && !$this->canUninstallPackageChild($row->package_id))
+		{
+			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_CANNOT_UNINSTALL_CHILD_OF_PACKAGE', $row->name), JLog::WARNING, 'jerror');
 
 			return false;
 		}
@@ -504,4 +514,15 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			return false;
 		}
 	}
+}
+
+/**
+ * Deprecated class placeholder. You should use JInstallerAdapterLibrary instead.
+ *
+ * @since       3.1
+ * @deprecated  4.0
+ * @codeCoverageIgnore
+ */
+class JInstallerLibrary extends JInstallerAdapterLibrary
+{
 }

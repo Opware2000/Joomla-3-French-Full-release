@@ -688,6 +688,17 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			return false;
 		}
 
+		/*
+		 * Does this extension have a parent package?
+		 * If so, check if the package disallows individual extensions being uninstalled if the package is not being uninstalled
+		 */
+		if ($this->extension->package_id && !$this->parent->isPackageUninstall() && !$this->canUninstallPackageChild($this->extension->package_id))
+		{
+			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_CANNOT_UNINSTALL_CHILD_OF_PACKAGE', $this->extension->name), JLog::WARNING, 'jerror');
+
+			return false;
+		}
+
 		// Get the admin and site paths for the component
 		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->extension->element));
 		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->extension->element));
@@ -726,8 +737,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Set the extensions name
-		$this->name = $this->getName();
-		$this->element = $this->getElement();
+		$this->set('name', $this->getName());
+		$this->set('element', $this->getElement());
 
 		// Attempt to load the admin language file; might have uninstall strings
 		$this->loadLanguage(JPATH_ADMINISTRATOR . '/components/' . $this->element);
@@ -874,7 +885,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	{
 		$db     = $this->parent->getDbo();
 
-		$option = $this->element;
+		$option = $this->get('element');
 
 		// If a component exists with this option in the table then we don't need to add menus
 		$query = $db->getQuery(true)
@@ -1108,7 +1119,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			{
 				if (!$table->delete((int) $menuid))
 				{
-					JError::raiseWarning(1, $table->getError());
+					$this->setError($table->getError());
 
 					$result = false;
 				}
@@ -1133,14 +1144,14 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	protected function _updateSiteMenus($component_id = null)
 	{
 		$db     = $this->parent->getDbo();
-		$option = $this->element;
+		$option = $this->get('element');
 
 		// Update all menu items which contain 'index.php?option=com_extension' or 'index.php?option=com_extension&...'
 		// to use the new component id.
 		$query = $db->getQuery(true)
 					->update('#__menu')
 					->set('component_id = ' . $db->quote($component_id))
-					->where("type = " . $db->quote('component'))
+					->where('type = ' . $db->quote('component'))
 					->where('client_id = 0')
 					->where('link LIKE ' . $db->quote('index.php?option=' . $option)
 							. " OR link LIKE '" . $db->escape('index.php?option=' . $option . '&') . "%'");
@@ -1333,4 +1344,15 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		return $table->id;
 	}
+}
+
+/**
+ * Deprecated class placeholder. You should use JInstallerAdapterComponent instead.
+ *
+ * @since       3.1
+ * @deprecated  4.0
+ * @codeCoverageIgnore
+ */
+class JInstallerComponent extends JInstallerAdapterComponent
+{
 }

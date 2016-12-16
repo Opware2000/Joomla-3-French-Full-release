@@ -113,7 +113,7 @@ class FieldsViewFields extends JViewLegacy
 		$canDo     = JHelperContent::getActions($component, 'field', $fieldId);
 
 		// Get the toolbar object instance
-		$bar = JToolbar::getInstance('toolbar');
+		$bar = JToolBar::getInstance('toolbar');
 
 		// Avoid nonsense situation.
 		if ($component == 'com_fields')

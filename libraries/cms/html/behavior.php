@@ -662,17 +662,15 @@ abstract class JHtmlBehavior
 			return;
 		}
 
-		$app = JFactory::getApplication();
+		$session = JFactory::getSession();
 
 		// If the handler is not 'Database', we set a fixed, small refresh value (here: 5 min)
-		if ($app->get('session_handler', 'filesystem') != 'database')
+		$refreshTime = 300;
+
+		if ($session->storeName === 'database')
 		{
-			$refreshTime = 300000;
-		}
-		else
-		{
-			$life_time   = $app->getSession()->getExpire() * 1000;
-			$refreshTime = ($life_time <= 60000) ? 45000 : $life_time - 60000;
+			$lifeTime    = $session->getExpire();
+			$refreshTime = $lifeTime <= 60 ? 45 : $lifeTime - 60;
 
 			// The longest refresh period is one hour to prevent integer overflow.
 			if ($refreshTime > 3600 || $refreshTime <= 0)
@@ -688,7 +686,7 @@ abstract class JHtmlBehavior
 		static::core();
 		static::polyfill('event', 'lt IE 9');
 
-		// Add keepalive script options.
+		// Add keepalive script options. 
 		JFactory::getDocument()->addScriptOptions('system.keepalive', array('interval' => $refreshTime * 1000, 'uri' => JRoute::_($uri)));
 
 		// Add script.

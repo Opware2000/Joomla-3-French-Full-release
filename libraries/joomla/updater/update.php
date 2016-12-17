@@ -238,8 +238,8 @@ class JUpdate extends JObject
 	 */
 	public function _startElement($parser, $name, $attrs = array())
 	{
-		$this->stack[] = $name;
-		$tag           = $this->_getStackLocation();
+		array_push($this->stack, $name);
+		$tag = $this->_getStackLocation();
 
 		// Reset the data
 		if (isset($this->$tag))

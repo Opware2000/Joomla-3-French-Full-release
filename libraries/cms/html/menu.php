@@ -130,7 +130,10 @@ abstract class JHtmlMenu
 				}
 
 				// Start group:
-				static::$items[] = JHtml::_('select.optgroup', $menu->text);
+				$optGroup = new stdClass;
+				$optGroup->value = '<OPTGROUP>';
+				$optGroup->text = $menu->text;
+				static::$items[] = $optGroup;
 
 				// Special "Add to this Menu" option:
 				static::$items[] = JHtml::_('select.option', $menu->value . '.1', JText::_('JLIB_HTML_ADD_TO_THIS_MENU'));
@@ -145,7 +148,11 @@ abstract class JHtmlMenu
 				}
 
 				// Finish group:
-				static::$items[] = JHtml::_('select.optgroup', $menu->text);
+				$closeOptGroup = new stdClass;
+				$closeOptGroup->value = '</OPTGROUP>';
+				$closeOptGroup->text = $menu->text;
+
+				static::$items[] = $closeOptGroup;
 			}
 		}
 
@@ -252,9 +259,9 @@ abstract class JHtmlMenu
 		// First pass - collect children
 		foreach ($mitems as $v)
 		{
-			$pt            = $v->parent_id;
-			$list          = @$children[$pt] ? $children[$pt] : array();
-			$list[]        = $v;
+			$pt = $v->parent_id;
+			$list = @$children[$pt] ? $children[$pt] : array();
+			array_push($list, $v);
 			$children[$pt] = $list;
 		}
 

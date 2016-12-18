@@ -240,6 +240,10 @@ class JFormFieldCalendar extends JFormField implements JFormDomfieldinterface
 				$this->format = JText::_('DATE_FORMAT_CALENDAR_DATE');
 			}
 		}
+		else
+		{
+			$this->format = $this->format;
+		}
 
 		// If a known filter is given use it.
 		switch (strtoupper($this->filter))

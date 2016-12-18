@@ -15,7 +15,6 @@ if ($this->params->get('show_advanced', 1) || $this->params->get('show_autosugge
 
 	$script = "
 jQuery(function() {";
-
 	if ($this->params->get('show_advanced', 1))
 	{
 		/*
@@ -34,7 +33,6 @@ jQuery(function() {";
 		});
 	});";
 	}
-
 	/*
 	* This segment of code sets up the autocompleter.
 	*/

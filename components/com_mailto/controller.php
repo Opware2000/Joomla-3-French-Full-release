@@ -135,6 +135,7 @@ class MailtoController extends JControllerLegacy
 
 		// Build the message to send
 		$msg  = JText::_('COM_MAILTO_EMAIL_MSG');
+		$link = $link;
 		$body = sprintf($msg, $SiteName, $sender, $from, $link);
 
 		// Clean the email data

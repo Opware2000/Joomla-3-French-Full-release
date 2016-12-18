@@ -407,6 +407,6 @@ class JException extends Exception
 	{
 		JLog::add('JException::setErrors is deprecated.', JLog::WARNING, 'deprecated');
 
-		$this->_errors[] = $error;
+		array_push($this->_errors, $error);
 	}
 }

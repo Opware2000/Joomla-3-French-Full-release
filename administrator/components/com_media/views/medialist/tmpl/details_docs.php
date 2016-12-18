@@ -12,18 +12,17 @@ use Joomla\Registry\Registry;
 
 JHtml::_('bootstrap.tooltip');
 
-$params     = new Registry;
-$dispatcher = JEventDispatcher::getInstance();
+$params = new Registry;
 ?>
 
 <?php foreach ($this->documents as $i => $doc) : ?>
-	<?php $dispatcher->trigger('onContentBeforeDisplay', array('com_media.file', &$doc, &$params)); ?>
+	<?php JFactory::getApplication()->triggerEvent('onContentBeforeDisplay', array('com_media.file', &$doc, &$params)); ?>
 	<tr>
-		<?php if ($this->canDelete) : ?>
+		<?php if ($this->canDelete):?>
 			<td>
 				<?php echo JHtml::_('grid.id', $i, $doc->name, false, 'rm', 'cb-document'); ?>
 			</td>
-		<?php endif; ?>
+		<?php endif;?>
 
 		<td>
 			<a title="<?php echo $doc->name; ?>">
@@ -47,8 +46,8 @@ $dispatcher = JEventDispatcher::getInstance();
 					<span class="icon-remove hasTooltip" title="<?php echo JHtml::tooltipText('JACTION_DELETE'); ?>"></span>
 				</a>
 			</td>
-		<?php endif; ?>
+		<?php endif;?>
 
 	</tr>
-	<?php $dispatcher->trigger('onContentAfterDisplay', array('com_media.file', &$doc, &$params)); ?>
+	<?php JFactory::getApplication()->triggerEvent('onContentAfterDisplay', array('com_media.file', &$doc, &$params)); ?>
 <?php endforeach; ?>

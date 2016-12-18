@@ -145,24 +145,17 @@ class UsersModelProfile extends JModelForm
 			}
 
 			// Unset the passwords.
-			unset($this->data->password1, $this->data->password2);
+			unset($this->data->password1);
+			unset($this->data->password2);
 
 			$registry           = new Registry($this->data->params);
 			$this->data->params = $registry->toArray();
 
 			// Get the dispatcher and load the users plugins.
-			$dispatcher = JEventDispatcher::getInstance();
 			JPluginHelper::importPlugin('user');
 
 			// Trigger the data preparation event.
-			$results = $dispatcher->trigger('onContentPrepareData', array('com_users.profile', $this->data));
-
-			// Check for errors encountered while preparing the data.
-			if (count($results) && in_array(false, $results, true))
-			{
-				$this->setError($dispatcher->getError());
-				$this->data = false;
-			}
+			$results = JFactory::getApplication()->triggerEvent('onContentPrepareData', array('com_users.profile', $this->data));
 		}
 
 		return $this->data;
@@ -331,8 +324,11 @@ class UsersModelProfile extends JModelForm
 			unset($data['username']);
 		}
 
-		// Unset block and sendEmail so they do not get overwritten
-		unset($data['block'], $data['sendEmail']);
+		// Unset the block so it does not get overwritten
+		unset($data['block']);
+
+		// Unset the sendEmail so it does not get overwritten
+		unset($data['sendEmail']);
 
 		// Handle the two factor authentication setup
 		if (array_key_exists('twofactor', $data))

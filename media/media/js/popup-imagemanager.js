@@ -213,15 +213,7 @@
 		 */
 		populateFields: function (file)
 		{
-		    $.each($('a.img-preview', $('#imageframe').contents()), function(i, v) {
-			if (v.href == "javascript:ImageManager.populateFields('" + file + "')") {
-			    $(v, $('#imageframe').contents()).addClass('selected');
-			} else {
-			    $(v, $('#imageframe').contents()).removeClass('selected');
-			}
-		    });
-
-		    $("#f_url").val(image_base_path + file);
+			$("#f_url").val(image_base_path + file);
 		},
 
 		/**

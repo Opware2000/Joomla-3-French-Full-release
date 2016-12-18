@@ -52,7 +52,7 @@ class JDatabaseDriverSqlite extends JDatabaseDriverPdo
 	public function __destruct()
 	{
 		$this->freeResult();
-		$this->connection = null;
+		unset($this->connection);
 	}
 
 	/**
@@ -65,7 +65,7 @@ class JDatabaseDriverSqlite extends JDatabaseDriverPdo
 	public function disconnect()
 	{
 		$this->freeResult();
-		$this->connection = null;
+		unset($this->connection);
 	}
 
 	/**

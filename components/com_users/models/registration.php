@@ -242,15 +242,9 @@ class UsersModelRegistration extends JModelForm
 			// Override the base user data with any data in the session.
 			$temp = (array) $app->getUserState('com_users.registration.data', array());
 
-			$form = $this->getForm(array(), false);
-
 			foreach ($temp as $k => $v)
 			{
-				// Only merge the field if it exists in the form.
-				if ($form->getField($k) !== false)
-				{
-					$this->data->$k = $v;
-				}
+				$this->data->$k = $v;
 			}
 
 			// Get the groups the user should be added to after registration.
@@ -262,21 +256,14 @@ class UsersModelRegistration extends JModelForm
 			$this->data->groups[] = $system;
 
 			// Unset the passwords.
-			unset($this->data->password1, $this->data->password2);
+			unset($this->data->password1);
+			unset($this->data->password2);
 
 			// Get the dispatcher and load the users plugins.
-			$dispatcher = JEventDispatcher::getInstance();
 			JPluginHelper::importPlugin('user');
 
 			// Trigger the data preparation event.
-			$results = $dispatcher->trigger('onContentPrepareData', array('com_users.registration', $this->data));
-
-			// Check for errors encountered while preparing the data.
-			if (count($results) && in_array(false, $results, true))
-			{
-				$this->setError($dispatcher->getError());
-				$this->data = false;
-			}
+			JFactory::getApplication()->triggerEvent('onContentPrepareData', array('com_users.registration', $this->data));
 		}
 
 		return $this->data;
@@ -675,11 +662,11 @@ class UsersModelRegistration extends JModelForm
 
 		if ($useractivation == 1)
 		{
-			return 'useractivate';
+			return "useractivate";
 		}
 		elseif ($useractivation == 2)
 		{
-			return 'adminactivate';
+			return "adminactivate";
 		}
 		else
 		{

@@ -11,7 +11,6 @@ defined('_JEXEC') or die;
 
 /** @var JDocumentHtml $this */
 
-$app  = JFactory::getApplication();
 $lang = JFactory::getLanguage();
 
 // Output as HTML5

@@ -78,7 +78,7 @@ abstract class JHtmlSidebar
 	 */
 	public static function addEntry($name, $link = '', $active = false)
 	{
-		static::$entries[] = array($name, $link, $active);
+		array_push(static::$entries, array($name, $link, $active));
 	}
 
 	/**
@@ -107,7 +107,7 @@ abstract class JHtmlSidebar
 	 */
 	public static function addFilter($label, $name, $options, $noDefault = false)
 	{
-		static::$filters[] = array('label' => $label, 'name' => $name, 'options' => $options, 'noDefault' => $noDefault);
+		array_push(static::$filters, array('label' => $label, 'name' => $name, 'options' => $options, 'noDefault' => $noDefault));
 	}
 
 	/**

@@ -212,7 +212,9 @@ class ContentHelperQuery
 			$join = '';
 		}
 
-		return array ('select' => $select, 'join' => $join);
+		$results = array ('select' => $select, 'join' => $join);
+
+		return $results;
 	}
 
 	/**

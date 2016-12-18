@@ -39,14 +39,14 @@ $modalClasses = array('modal', 'hide');
 
 if (!isset($params['animation']) || $params['animation'])
 {
-	$modalClasses[] = 'fade';
+	array_push($modalClasses, 'fade');
 }
 
 $modalWidth = isset($params['modalWidth']) ? round((int) $params['modalWidth'], -1) : '';
 
 if ($modalWidth && $modalWidth > 0 && $modalWidth <= 100)
 {
-	$modalClasses[] = 'jviewport-width' . $modalWidth;
+	array_push($modalClasses, 'jviewport-width' . $modalWidth);
 }
 
 $modalAttributes = array(

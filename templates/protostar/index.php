@@ -11,7 +11,8 @@ defined('_JEXEC') or die;
 
 /** @var JDocumentHtml $this */
 
-$app = JFactory::getApplication();
+$app  = JFactory::getApplication();
+$user = JFactory::getUser();
 
 // Output as HTML5
 $this->setHtml5(true);

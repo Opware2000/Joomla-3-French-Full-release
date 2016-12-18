@@ -1192,8 +1192,8 @@ class JForm
 			// Check for an error.
 			if ($valid instanceof Exception)
 			{
-				array_push($this->errors, $valid);
-				$return = false;
+				$this->errors[] = $valid;
+				$return         = false;
 			}
 		}
 
@@ -2109,7 +2109,7 @@ class JForm
 			}
 
 			// Instantiate the form.
-			$forms[$name] = new static($name, $options);
+			$forms[$name] = new JForm($name, $options);
 
 			// Load the data.
 			if (substr($data, 0, 1) == '<')

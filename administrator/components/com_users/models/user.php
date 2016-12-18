@@ -78,13 +78,14 @@ class UsersModelUser extends JModelAdmin
 		$result->tags->getTagIds($result->id, $context);
 
 		// Get the dispatcher and load the content plugins.
+		$dispatcher = JEventDispatcher::getInstance();
 		JPluginHelper::importPlugin('content');
 
 		// Load the user plugins for backward compatibility (v3.3.3 and earlier).
 		JPluginHelper::importPlugin('user');
 
 		// Trigger the data preparation event.
-		JFactory::getApplication()->triggerEvent('onContentPrepareData', array($context, $result));
+		$dispatcher->trigger('onContentPrepareData', array($context, $result));
 
 		return $result;
 	}
@@ -331,6 +332,7 @@ class UsersModelUser extends JModelAdmin
 		$iAmSuperAdmin = $user->authorise('core.admin');
 
 		JPluginHelper::importPlugin($this->events_map['delete']);
+		$dispatcher = JEventDispatcher::getInstance();
 
 		if (in_array($user->id, $pks))
 		{
@@ -356,7 +358,7 @@ class UsersModelUser extends JModelAdmin
 					$user_to_delete = JFactory::getUser($pk);
 
 					// Fire the before delete event.
-					JFactory::getApplication()->triggerEvent($this->event_before_delete, array($table->getProperties()));
+					$dispatcher->trigger($this->event_before_delete, array($table->getProperties()));
 
 					if (!$table->delete($pk))
 					{
@@ -367,7 +369,7 @@ class UsersModelUser extends JModelAdmin
 					else
 					{
 						// Trigger the after delete event.
-						JFactory::getApplication()->triggerEvent($this->event_after_delete, array($user_to_delete->getProperties(), true, $this->getError()));
+						$dispatcher->trigger($this->event_after_delete, array($user_to_delete->getProperties(), true, $this->getError()));
 					}
 				}
 				else
@@ -401,6 +403,7 @@ class UsersModelUser extends JModelAdmin
 	public function block(&$pks, $value = 1)
 	{
 		$app        = JFactory::getApplication();
+		$dispatcher = JEventDispatcher::getInstance();
 		$user       = JFactory::getUser();
 
 		// Check if I am a Super Admin
@@ -460,7 +463,7 @@ class UsersModelUser extends JModelAdmin
 						}
 
 						// Trigger the before save event.
-						$result = JFactory::getApplication()->triggerEvent($this->event_before_save, array($old, false, $table->getProperties()));
+						$result = $dispatcher->trigger($this->event_before_save, array($old, false, $table->getProperties()));
 
 						if (in_array(false, $result, true))
 						{
@@ -477,7 +480,7 @@ class UsersModelUser extends JModelAdmin
 						}
 
 						// Trigger the after save event
-						JFactory::getApplication()->triggerEvent($this->event_after_save, array($table->getProperties(), false, true, null));
+						$dispatcher->trigger($this->event_after_save, array($table->getProperties(), false, true, null));
 					}
 					catch (Exception $e)
 					{
@@ -515,7 +518,8 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function activate(&$pks)
 	{
-		$user = JFactory::getUser();
+		$dispatcher = JEventDispatcher::getInstance();
+		$user       = JFactory::getUser();
 
 		// Check if I am a Super Admin
 		$iAmSuperAdmin = $user->authorise('core.admin');
@@ -556,7 +560,7 @@ class UsersModelUser extends JModelAdmin
 						}
 
 						// Trigger the before save event.
-						$result = JFactory::getApplication()->triggerEvent($this->event_before_save, array($old, false, $table->getProperties()));
+						$result = $dispatcher->trigger($this->event_before_save, array($old, false, $table->getProperties()));
 
 						if (in_array(false, $result, true))
 						{
@@ -573,7 +577,7 @@ class UsersModelUser extends JModelAdmin
 						}
 
 						// Fire the after save event
-						JFactory::getApplication()->triggerEvent($this->event_after_save, array($table->getProperties(), false, true, null));
+						$dispatcher->trigger($this->event_after_save, array($table->getProperties(), false, true, null));
 					}
 					catch (Exception $e)
 					{
@@ -673,6 +677,19 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function batchReset($user_ids, $action)
 	{
+		$user_ids = ArrayHelper::toInteger($user_ids);
+
+		// Check if I am a Super Admin
+		$iAmSuperAdmin = JFactory::getUser()->authorise('core.admin');
+
+		// Non-super super user cannot work with super-admin user.
+		if (!$iAmSuperAdmin && JUserHelper::checkSuperUserInUsers($user_ids))
+		{
+			$this->setError(JText::_('COM_USERS_ERROR_CANNOT_BATCH_SUPERUSER'));
+
+			return false;
+		}
+
 		// Set the action to perform
 		if ($action === 'yes')
 		{
@@ -734,18 +751,29 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function batchUser($group_id, $user_ids, $action)
 	{
-		// Get the DB object
-		$db = $this->getDbo();
-
 		$user_ids = ArrayHelper::toInteger($user_ids);
 
-		// Non-super admin cannot work with super-admin group
-		if ((!JFactory::getUser()->get('isRoot') && JAccess::checkGroup($group_id, 'core.admin')) || $group_id < 1)
+		// Check if I am a Super Admin
+		$iAmSuperAdmin = JFactory::getUser()->authorise('core.admin');
+
+		// Non-super super user cannot work with super-admin user.
+		if (!$iAmSuperAdmin && JUserHelper::checkSuperUserInUsers($user_ids))
+		{
+			$this->setError(JText::_('COM_USERS_ERROR_CANNOT_BATCH_SUPERUSER'));
+
+			return false;
+		}
+
+		// Non-super admin cannot work with super-admin group.
+		if ((!$iAmSuperAdmin && JAccess::checkGroup($group_id, 'core.admin')) || $group_id < 1)
 		{
 			$this->setError(JText::_('COM_USERS_ERROR_INVALID_GROUP'));
 
 			return false;
 		}
+
+		// Get the DB object
+		$db = $this->getDbo();
 
 		switch ($action)
 		{
@@ -959,17 +987,17 @@ class UsersModelUser extends JModelAdmin
 		// Get the encrypted data
 		list($method, $config) = explode(':', $item->otpKey, 2);
 		$encryptedOtep = $item->otep;
-		
+
 		// Get the secret key, yes the thing that is saved in the configuration file
 		$key = $this->getOtpConfigEncryptionKey();
-		
+
 		if (strpos($config, '{') === false)
 		{
 			$openssl         = new FOFEncryptAes($key, 256);
 			$mcrypt          = new FOFEncryptAes($key, 256, 'cbc', null, 'mcrypt');
-			
+
 			$decryptedConfig = $mcrypt->decryptString($config);
-			
+
 			if (strpos($decryptedConfig, '{') !== false)
 			{
 				// Data encrypted with mcrypt
@@ -981,9 +1009,9 @@ class UsersModelUser extends JModelAdmin
 				// Config data seems to be save encrypted, this can happen with 3.6.3 and openssl, lets get the data
 				$decryptedConfig = $openssl->decryptString($config);
 			}
-			
+
 			$otpKey = $method . ':' . $decryptedConfig;
-			
+
 			$query = $db->getQuery(true)
 				->update($db->qn('#__users'))
 				->set($db->qn('otep') . '=' . $db->q($encryptedOtep))
@@ -996,7 +1024,7 @@ class UsersModelUser extends JModelAdmin
 		{
 			$decryptedConfig = $config;
 		}
-		
+
 		// Create an encryptor class
 		$aes = new FOFEncryptAes($key, 256);
 
@@ -1040,7 +1068,7 @@ class UsersModelUser extends JModelAdmin
 		// Return the configuration object
 		return $otpConfig;
 	}
-	
+
 	/**
 	 * Sets the one time password (OTP) – a.k.a. two factor authentication –
 	 * configuration for a particular user. The $otpConfig object is the same as

@@ -254,7 +254,7 @@ class InstallerModelUpdatesites extends InstallerModel
 				{
 					foreach (glob($clientPath . '/' . $extensionGroupFolderName . '/*', GLOB_NOSORT | GLOB_ONLYDIR) as $extensionFolderPath)
 					{
-						array_push($pathsToSearch, $extensionFolderPath);
+						$pathsToSearch[] = $extensionFolderPath;
 					}
 				}
 
@@ -265,7 +265,7 @@ class InstallerModelUpdatesites extends InstallerModel
 					{
 						foreach (glob($pluginGroupFolderPath . '/*', GLOB_NOSORT | GLOB_ONLYDIR) as $extensionFolderPath)
 						{
-							array_push($pathsToSearch, $extensionFolderPath);
+							$pathsToSearch[] = $extensionFolderPath;
 						}
 					}
 				}
@@ -346,7 +346,7 @@ class InstallerModelUpdatesites extends InstallerModel
 							JPluginHelper::importPlugin('extension', 'joomla');
 
 							// Fire the onExtensionAfterUpdate
-							JFactory::getApplication()->triggerEvent('onExtensionAfterUpdate', array('installer' => $tmpInstaller, 'eid' => $eid));
+							JEventDispatcher::getInstance()->trigger('onExtensionAfterUpdate', array('installer' => $tmpInstaller, 'eid' => $eid));
 
 							$count++;
 						}

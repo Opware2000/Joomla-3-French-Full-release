@@ -82,7 +82,7 @@ elseif ($input->get('module'))
 			$class = 'Mod' . ucfirst($module) . 'Helper';
 		}
 
-		$method = $input->get('method') ? $input->get('method') : 'get';
+		$method = $input->get('method') ?: 'get';
 
 		if (is_file($helperFile))
 		{
@@ -137,10 +137,11 @@ elseif ($input->get('plugin'))
 	$group      = $input->get('group', 'ajax');
 	JPluginHelper::importPlugin($group);
 	$plugin     = ucfirst($input->get('plugin'));
+	$dispatcher = JEventDispatcher::getInstance();
 
 	try
 	{
-		$results = JFactory::getApplication()->triggerEvent('onAjax' . $plugin);
+		$results = $dispatcher->trigger('onAjax' . $plugin);
 	}
 	catch (Exception $e)
 	{

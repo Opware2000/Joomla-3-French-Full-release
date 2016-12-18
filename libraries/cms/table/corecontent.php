@@ -27,7 +27,7 @@ class JTableCorecontent extends JTable
 	 *
 	 * @since   3.1
 	 */
-	public function __construct(JDatabaseDriver $db)
+	public function __construct($db)
 	{
 		parent::__construct('#__ucm_content', 'core_content_id', $db);
 	}
@@ -89,17 +89,6 @@ class JTableCorecontent extends JTable
 	 */
 	public function check()
 	{
-		try
-		{
-			parent::check();
-		}
-		catch (\Exception $e)
-		{
-			$this->setError($e->getMessage());
-
-			return false;
-		}
-
 		if (trim($this->core_title) == '')
 		{
 			$this->setError(JText::_('JLIB_CMS_WARNING_PROVIDE_VALID_NAME'));
@@ -143,10 +132,10 @@ class JTableCorecontent extends JTable
 			// Only process if not empty
 
 			// Array of characters to remove
-			$bad_characters = array("\n", "\r", "\"", "<", ">");
+			$bad_characters = array("\n", "\r", "\"", '<', '>');
 
 			// Remove bad characters
-			$after_clean = StringHelper::str_ireplace($bad_characters, "", $this->core_metakey);
+			$after_clean = StringHelper::str_ireplace($bad_characters, '', $this->core_metakey);
 
 			// Create array using commas as delimiter
 			$keys = explode(',', $after_clean);
@@ -162,7 +151,7 @@ class JTableCorecontent extends JTable
 				}
 			}
 			// Put array back together delimited by ", "
-			$this->core_metakey = implode(", ", $clean_keys);
+			$this->core_metakey = implode(', ', $clean_keys);
 		}
 
 		return true;

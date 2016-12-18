@@ -223,7 +223,7 @@ class JDate extends DateTime
 	 */
 	public static function getInstance($date = 'now', $tz = null)
 	{
-		return new static($date, $tz);
+		return new JDate($date, $tz);
 	}
 
 	/**

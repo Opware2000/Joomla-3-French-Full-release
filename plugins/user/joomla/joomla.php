@@ -222,9 +222,6 @@ class PlgUserJoomla extends JPlugin
 		// Mark the user as logged in
 		$instance->guest = 0;
 
-		// Load the logged in user to the application
-		$this->app->loadIdentity($instance);
-
 		$session = JFactory::getSession();
 
 		// Grab the current session ID
@@ -233,7 +230,6 @@ class PlgUserJoomla extends JPlugin
 		// Fork the session
 		$session->fork();
 
-		// Register the needed session variables
 		$session->set('user', $instance);
 
 		// Ensure the new session's metadata is written to the database
@@ -262,7 +258,7 @@ class PlgUserJoomla extends JPlugin
 
 		if ($this->app->isSite())
 		{
-			$this->app->input->cookie->set("joomla_user_state", "logged_in", 0, $cookie_path, $cookie_domain, 0);
+			$this->app->input->cookie->set('joomla_user_state', 'logged_in', 0, $cookie_path, $cookie_domain, 0);
 		}
 
 		return true;
@@ -331,7 +327,7 @@ class PlgUserJoomla extends JPlugin
 
 		if ($this->app->isSite())
 		{
-			$this->app->input->cookie->set("joomla_user_state", "", time() - 86400, $cookie_path, $cookie_domain, 0);
+			$this->app->input->cookie->set('joomla_user_state', '', time() - 86400, $cookie_path, $cookie_domain, 0);
 		}
 
 		return true;

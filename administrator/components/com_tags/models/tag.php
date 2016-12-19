@@ -230,25 +230,6 @@ class TagsModelTag extends JModelAdmin
 	}
 
 	/**
-	 * Method to preprocess the form.
-	 *
-	 * @param   JForm   $form   A JForm object.
-	 * @param   mixed   $data   The data expected for the form.
-	 * @param   string  $group  The name of the plugin group to import.
-	 *
-	 * @return  void
-	 *
-	 * @see     JFormField
-	 * @since   3.1
-	 * @throws  Exception if there is an error in the form event.
-	 */
-	protected function preprocessForm(JForm $form, $data, $group = 'content')
-	{
-		// Trigger the default form events.
-		parent::preprocessForm($form, $data, $group);
-	}
-
-	/**
 	 * Method to save the form data.
 	 *
 	 * @param   array  $data  The form data.
@@ -259,6 +240,7 @@ class TagsModelTag extends JModelAdmin
 	 */
 	public function save($data)
 	{
+		$dispatcher = JEventDispatcher::getInstance();
 		$table      = $this->getTable();
 		$input      = JFactory::getApplication()->input;
 		$pk         = (!empty($data['id'])) ? $data['id'] : (int) $this->getState($this->getName() . '.id');
@@ -325,7 +307,7 @@ class TagsModelTag extends JModelAdmin
 		}
 
 		// Trigger the before save event.
-		$result = JFactory::getApplication()->triggerEvent($this->event_before_save, array($context, &$table, $isNew));
+		$result = $dispatcher->trigger($this->event_before_save, array($context, &$table, $isNew));
 
 		if (in_array(false, $result, true))
 		{
@@ -343,7 +325,7 @@ class TagsModelTag extends JModelAdmin
 		}
 
 		// Trigger the after save event.
-		JFactory::getApplication()->triggerEvent($this->event_after_save, array($context, &$table, $isNew));
+		$dispatcher->trigger($this->event_after_save, array($context, &$table, $isNew));
 
 		// Rebuild the path for the tag:
 		if (!$table->rebuildPath($table->id))

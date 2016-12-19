@@ -22,7 +22,7 @@ CREATE TABLE "#__fields" (
   "ordering" bigint DEFAULT 0 NOT NULL,
   "params" text DEFAULT '' NOT NULL,
   "fieldparams" text DEFAULT '' NOT NULL,
-  "attributes" text DEFAULT '' NOT NULL,
+  "attributes" text DEFAULT '' NOT NULL, 
   "language" varchar(7) DEFAULT '' NOT NULL,
   "created_time" timestamp without time zone DEFAULT '1970-01-01 00:00:00' NOT NULL,
   "created_user_id" bigint DEFAULT 0 NOT NULL,
@@ -47,7 +47,7 @@ CREATE INDEX "#__fields_idx_language" ON "#__fields" ("language");
 CREATE TABLE "#__fields_groups" (
   "id" serial NOT NULL,
   "asset_id" bigint DEFAULT 0 NOT NULL,
-  "extension" varchar(255) DEFAULT '' NOT NULL,
+  "context" varchar(255) DEFAULT '' NOT NULL,
   "title" varchar(255) DEFAULT '' NOT NULL,
   "note" varchar(255) DEFAULT '' NOT NULL,
   "description" text DEFAULT '' NOT NULL,
@@ -67,7 +67,7 @@ CREATE INDEX "#__fields_idx_checked_out" ON "#__fields_groups" ("checked_out");
 CREATE INDEX "#__fields_idx_state" ON "#__fields_groups" ("state");
 CREATE INDEX "#__fields_idx_created_by" ON "#__fields_groups" ("created_by");
 CREATE INDEX "#__fields_idx_access" ON "#__fields_groups" ("access");
-CREATE INDEX "#__fields_idx_extension" ON "#__fields_groups" ("extension");
+CREATE INDEX "#__fields_idx_context" ON "#__fields_groups" ("context");
 CREATE INDEX "#__fields_idx_language" ON "#__fields_groups" ("language");
 
 --
@@ -77,7 +77,7 @@ CREATE TABLE "#__fields_values" (
 "field_id" bigint DEFAULT 0 NOT NULL,
 "item_id" varchar(255) DEFAULT '' NOT NULL,
 "context" varchar(255) DEFAULT '' NOT NULL,
-"value" text DEFAULT '' NOT NULL
+"value" text DEFAULT '' NOT NULL 
 );
 CREATE INDEX "#__fields_values_idx_field_id" ON "#__fields_values" ("field_id");
 CREATE INDEX "#__fields_values_idx_context" ON "#__fields_values" ("context");

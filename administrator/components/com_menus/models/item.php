@@ -255,7 +255,7 @@ class MenusModelItem extends JModelAdmin
 			{
 				if (!in_array($childId, $pks))
 				{
-					array_push($pks, $childId);
+					$pks[] = $childId;
 				}
 			}
 
@@ -1259,6 +1259,7 @@ class MenusModelItem extends JModelAdmin
 	 */
 	public function save($data)
 	{
+		$dispatcher = JEventDispatcher::getInstance();
 		$pk         = (!empty($data['id'])) ? $data['id'] : (int) $this->getState('item.id');
 		$isNew      = true;
 		$table      = $this->getTable();
@@ -1339,7 +1340,7 @@ class MenusModelItem extends JModelAdmin
 		}
 
 		// Trigger the before save event.
-		$result = JFactory::getApplication()->triggerEvent($this->event_before_save, array($context, &$table, $isNew));
+		$result = $dispatcher->trigger($this->event_before_save, array($context, &$table, $isNew));
 
 		// Store the data.
 		if (in_array(false, $result, true)|| !$table->store())
@@ -1350,7 +1351,7 @@ class MenusModelItem extends JModelAdmin
 		}
 
 		// Trigger the after save event.
-		JFactory::getApplication()->triggerEvent($this->event_after_save, array($context, &$table, $isNew));
+		$dispatcher->trigger($this->event_after_save, array($context, &$table, $isNew));
 
 		// Rebuild the tree path.
 		if (!$table->rebuildPath($table->id))

@@ -9,6 +9,7 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\Cms\Event\BeforeExecuteEvent;
 use Joomla\Registry\Registry;
 use Joomla\String\StringHelper;
 
@@ -108,7 +109,8 @@ class PlgSystemLanguageFilter extends JPlugin
 				if (($language->access && !in_array($language->access, $levels))
 					|| (!array_key_exists($language->lang_code, JLanguageHelper::getInstalledLanguages(0))))
 				{
-					unset($this->lang_codes[$language->lang_code], $this->sefs[$language->sef]);
+					unset($this->lang_codes[$language->lang_code]);
+					unset($this->sefs[$language->sef]);
 				}
 			}
 		}
@@ -161,6 +163,30 @@ class PlgSystemLanguageFilter extends JPlugin
 		{
 			$this->app->set('sitename', $this->lang_codes[$this->current_lang]->sitename);
 		}
+	}
+
+	/**
+	 * Listener for the onBeforeExecute event
+	 *
+	 * @param   BeforeExecuteEvent  $event  The Event object
+	 *
+	 * @return  void
+	 *
+	 * @since   4.0
+	 */
+	public function onBeforeExecute(BeforeExecuteEvent $event)
+	{
+		/** @var JApplicationCms $app */
+		$app = $event->getApplication();
+
+		if (!$app->isSite())
+		{
+			return;
+		}
+
+		// If a language was specified it has priority, otherwise use user or default language settings
+		$app->setLanguageFilter(true);
+		$app->setDetectBrowser($this->params->get('detect_browser', '1') == '1');
 	}
 
 	/**
@@ -375,7 +401,7 @@ class PlgSystemLanguageFilter extends JPlugin
 
 		// We are called via POST. We don't care about the language
 		// and simply set the default language as our current language.
-		if ($this->app->input->getMethod() == 'POST'
+		if ($this->app->input->getMethod() == "POST"
 			|| count($this->app->input->post) > 0
 			|| count($this->app->input->files) > 0)
 		{

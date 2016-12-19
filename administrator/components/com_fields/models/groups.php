@@ -78,8 +78,8 @@ class FieldsModelGroups extends JModelList
 		// List state information.
 		parent::populateState('a.ordering', 'asc');
 
-		$context = $this->getUserStateFromRequest($this->context . '.context', 'context', 'com_content', 'CMD');
-		$this->setState('filter.context', $context);
+		$extension = $this->getUserStateFromRequest($this->context . '.extension', 'extension', 'com_content', 'CMD');
+		$this->setState('filter.extension', $extension);
 	}
 
 	/**
@@ -99,7 +99,7 @@ class FieldsModelGroups extends JModelList
 	{
 		// Compile the store id.
 		$id .= ':' . $this->getState('filter.search');
-		$id .= ':' . $this->getState('filter.context');
+		$id .= ':' . $this->getState('filter.extension');
 		$id .= ':' . $this->getState('filter.state');
 		$id .= ':' . print_r($this->getState('filter.language'), true);
 
@@ -144,9 +144,9 @@ class FieldsModelGroups extends JModelList
 		$query->select('ua.name AS author_name')->join('LEFT', '#__users AS ua ON ua.id = a.created_by');
 
 		// Filter by context
-		if ($context = $this->getState('filter.context', 'com_fields'))
+		if ($extension = $this->getState('filter.extension', 'com_fields'))
 		{
-			$query->where('a.context = ' . $db->quote($context));
+			$query->where('a.extension = ' . $db->quote($extension));
 		}
 
 		// Filter by access level.

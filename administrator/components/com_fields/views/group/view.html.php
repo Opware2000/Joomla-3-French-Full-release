@@ -62,15 +62,7 @@ class FieldsViewGroup extends JViewLegacy
 		$this->item  = $this->get('Item');
 		$this->state = $this->get('State');
 
-		$component = '';
-		$parts     = FieldsHelper::extract($this->state->get('filter.context'));
-
-		if ($parts)
-		{
-			$component = $parts[0];
-		}
-
-		$this->canDo = JHelperContent::getActions($component, 'fieldgroup', $this->item->id);
+		$this->canDo = JHelperContent::getActions($this->state->get('filter.extension'), 'fieldgroup', $this->item->id);
 
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
@@ -96,14 +88,7 @@ class FieldsViewGroup extends JViewLegacy
 	 */
 	protected function addToolbar()
 	{
-		$component = '';
-		$parts     = FieldsHelper::extract($this->state->get('filter.context'));
-
-		if ($parts)
-		{
-			$component = $parts[0];
-		}
-
+		$extension = $this->state->get('filter.extension');
 		$userId    = JFactory::getUser()->get('id');
 		$canDo     = $this->canDo;
 
@@ -111,20 +96,20 @@ class FieldsViewGroup extends JViewLegacy
 		$checkedOut = !($this->item->checked_out == 0 || $this->item->checked_out == $userId);
 
 		// Avoid nonsense situation.
-		if ($component == 'com_fields')
+		if ($extension == 'com_fields')
 		{
 			return;
 		}
 
-		// Load component language file
-		JFactory::getLanguage()->load($component, JPATH_ADMINISTRATOR);
+		// Load extension language file
+		JFactory::getLanguage()->load($extension, JPATH_ADMINISTRATOR);
 
-		$title = JText::sprintf('COM_FIELDS_VIEW_GROUP_' . ($isNew ? 'ADD' : 'EDIT') . '_TITLE', JText::_(strtoupper($component)));
+		$title = JText::sprintf('COM_FIELDS_VIEW_GROUP_' . ($isNew ? 'ADD' : 'EDIT') . '_TITLE', JText::_(strtoupper($extension)));
 
 		// Prepare the toolbar.
 		JToolbarHelper::title(
 			$title,
-			'puzzle field-' . ($isNew ? 'add' : 'edit') . ' ' . substr($component, 4) . '-group-' .
+			'puzzle field-' . ($isNew ? 'add' : 'edit') . ' ' . substr($extension, 4) . '-group-' .
 			($isNew ? 'add' : 'edit')
 		);
 

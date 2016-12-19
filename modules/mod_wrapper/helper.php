@@ -42,12 +42,12 @@ class ModWrapperHelper
 		if ($params->get('add'))
 		{
 			// Adds 'http://' if none is set
-			if (strpos($url, '/') === 0)
+			if (substr($url, 0, 1) == '/')
 			{
 				// Relative url in component. use server http_host.
 				$url = 'http://' . $_SERVER['HTTP_HOST'] . $url;
 			}
-			elseif (strpos($url, 'http') === false && strpos($url, 'https') === false)
+			elseif (!strstr($url, 'http') && !strstr($url, 'https'))
 			{
 				$url = 'http://' . $url;
 			}

@@ -18,15 +18,7 @@ JHtml::_('formbehavior.chosen', 'select');
 $app       = JFactory::getApplication();
 $user      = JFactory::getUser();
 $userId    = $user->get('id');
-
-$component = '';
-$parts     = FieldsHelper::extract($this->state->get('filter.context'));
-
-if ($parts)
-{
-	$component = $this->escape($parts[0]);
-}
-
+$extension = $this->escape($this->state->get('filter.extension'));
 $listOrder = $this->escape($this->state->get('list.ordering'));
 $listDirn  = $this->escape($this->state->get('list.direction'));
 $ordering  = ($listOrder == 'a.ordering');
@@ -86,10 +78,10 @@ if ($saveOrder)
 				<tbody>
 					<?php foreach ($this->items as $i => $item) : ?>
 						<?php $ordering   = ($listOrder == 'a.ordering'); ?>
-						<?php $canEdit    = $user->authorise('core.edit', $component . '.fieldgroup.' . $item->id); ?>
+						<?php $canEdit    = $user->authorise('core.edit', $extension . '.fieldgroup.' . $item->id); ?>
 						<?php $canCheckin = $user->authorise('core.admin', 'com_checkin') || $item->checked_out == $userId || $item->checked_out == 0; ?>
-						<?php $canEditOwn = $user->authorise('core.edit.own', $component . '.fieldgroup.' . $item->id) && $item->created_by == $userId; ?>
-						<?php $canChange  = $user->authorise('core.edit.state', $component . '.fieldgroup.' . $item->id) && $canCheckin; ?>
+						<?php $canEditOwn = $user->authorise('core.edit.own', $extension . '.fieldgroup.' . $item->id) && $item->created_by == $userId; ?>
+						<?php $canChange  = $user->authorise('core.edit.state', $extension . '.fieldgroup.' . $item->id) && $canCheckin; ?>
 						<tr class="row<?php echo $i % 2; ?>" item-id="<?php echo $item->id ?>">
 							<td class="order nowrap center hidden-phone">
 								<?php $iconClass = ''; ?>
@@ -151,9 +143,9 @@ if ($saveOrder)
 				</tbody>
 			</table>
 			<?php //Load the batch processing form. ?>
-			<?php if ($user->authorise('core.create', $component)
-				&& $user->authorise('core.edit', $component)
-				&& $user->authorise('core.edit.state', $component)) : ?>
+			<?php if ($user->authorise('core.create', $extension)
+				&& $user->authorise('core.edit', $extension)
+				&& $user->authorise('core.edit.state', $extension)) : ?>
 				<?php echo JHtml::_(
 						'bootstrap.renderModal',
 						'collapseModal',

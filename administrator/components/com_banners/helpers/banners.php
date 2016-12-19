@@ -89,41 +89,41 @@ class BannersHelper extends JHelperContent
 
 		foreach ($rows as $row)
 		{
-			$purchaseType = $row->purchase_type;
+			$purchase_type = $row->purchase_type;
 
-			if ($purchaseType < 0 && $row->cid)
+			if ($purchase_type < 0 && $row->cid)
 			{
 				/** @var BannersTableClient $client */
 				$client = JTable::getInstance('Client', 'BannersTable');
 				$client->load($row->cid);
-				$purchaseType = $client->purchase_type;
+				$purchase_type = $client->purchase_type;
 			}
 
-			if ($purchaseType < 0)
+			if ($purchase_type < 0)
 			{
 				$params = JComponentHelper::getParams('com_banners');
-				$purchaseType = $params->get('purchase_type');
+				$purchase_type = $params->get('purchase_type');
 			}
 
-			switch ($purchaseType)
+			switch ($purchase_type)
 			{
 				case 1:
 					$reset = $nullDate;
 					break;
 				case 2:
-					$date = JFactory::getDate('+1 year ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 year ' . date('Y-m-d', strtotime('now')));
 					$reset = $db->quote($date->toSql());
 					break;
 				case 3:
-					$date = JFactory::getDate('+1 month ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 month ' . date('Y-m-d', strtotime('now')));
 					$reset = $db->quote($date->toSql());
 					break;
 				case 4:
-					$date = JFactory::getDate('+7 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+7 day ' . date('Y-m-d', strtotime('now')));
 					$reset = $db->quote($date->toSql());
 					break;
 				case 5:
-					$date = JFactory::getDate('+1 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 day ' . date('Y-m-d', strtotime('now')));
 					$reset = $db->quote($date->toSql());
 					break;
 			}

@@ -30,12 +30,11 @@ abstract class ModLanguagesHelper
 	 */
 	public static function getList(&$params)
 	{
-		$user		= JFactory::getUser();
-		$lang		= JFactory::getLanguage();
-		$languages	= JLanguageHelper::getLanguages();
-		$app		= JFactory::getApplication();
-		$menu		= $app->getMenu();
-		$active		= $menu->getActive();
+		$user      = JFactory::getUser();
+		$lang      = JFactory::getLanguage();
+		$languages = JLanguageHelper::getLanguages();
+		$app       = JFactory::getApplication();
+		$menu      = $app->getMenu();
 
 		// Get menu home items
 		$homes = array();
@@ -45,7 +44,7 @@ abstract class ModLanguagesHelper
 		{
 			$default = $menu->getDefault($item->lang_code);
 
-			if ($default && $default->language === $item->lang_code)
+			if ($default && $default->language == $item->lang_code)
 			{
 				$homes[$item->lang_code] = $default;
 			}
@@ -56,6 +55,8 @@ abstract class ModLanguagesHelper
 
 		if ($assoc)
 		{
+			$active = $menu->getActive();
+
 			if ($active)
 			{
 				$associations = MenusHelper::getAssociations($active->id);
@@ -95,7 +96,7 @@ abstract class ModLanguagesHelper
 			}
 			else
 			{
-				$language->active = ($language->lang_code === $lang->getTag());
+				$language->active = ($language->lang_code == $lang->getTag());
 
 				// Fetch language rtl
 				// If loaded language get from current JLanguage metadata
@@ -120,10 +121,6 @@ abstract class ModLanguagesHelper
 					{
 						$itemid = $associations[$language->lang_code];
 						$language->link = JRoute::_('index.php?lang=' . $language->sef . '&Itemid=' . $itemid);
-					}
-					elseif ($active && $active->language == '*')
-					{
-						$language->link = JRoute::_('index.php?lang=' . $language->sef . '&Itemid=' . $active->id);
 					}
 					else
 					{

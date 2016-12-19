@@ -22,15 +22,14 @@ class BannersTableBanner extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  &$db  Database connector object
+	 * @param   JDatabaseDriver  $db  Database connector object
 	 *
 	 * @since   1.5
 	 */
-	public function __construct(&$db)
+	public function __construct(JDatabaseDriver $db)
 	{
+		$this->typeAlias = 'com_banners.banner';
 		parent::__construct('#__banners', 'id', $db);
-
-		JTableObserverContenthistory::createObserver($this, array('typeAlias' => 'com_banners.banner'));
 
 		$this->created = JFactory::getDate()->toSql();
 		$this->setColumnAlias('published', 'state');
@@ -61,6 +60,17 @@ class BannersTableBanner extends JTable
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		// Set name
 		$this->name = htmlspecialchars_decode($this->name, ENT_QUOTES);
 
@@ -175,40 +185,40 @@ class BannersTableBanner extends JTable
 	{
 		if (empty($this->id))
 		{
-			$purchaseType = $this->purchase_type;
+			$purchase_type = $this->purchase_type;
 
-			if ($purchaseType < 0 && $this->cid)
+			if ($purchase_type < 0 && $this->cid)
 			{
 				/** @var BannersTableClient $client */
 				$client = JTable::getInstance('Client', 'BannersTable');
 				$client->load($this->cid);
-				$purchaseType = $client->purchase_type;
+				$purchase_type = $client->purchase_type;
 			}
 
-			if ($purchaseType < 0)
+			if ($purchase_type < 0)
 			{
-				$purchaseType = JComponentHelper::getParams('com_banners')->get('purchase_type');
+				$purchase_type = JComponentHelper::getParams('com_banners')->get('purchase_type');
 			}
 
-			switch ($purchaseType)
+			switch ($purchase_type)
 			{
 				case 1:
 					$this->reset = $this->_db->getNullDate();
 					break;
 				case 2:
-					$date = JFactory::getDate('+1 year ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 year ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 3:
-					$date = JFactory::getDate('+1 month ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 month ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 4:
-					$date = JFactory::getDate('+7 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+7 day ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 				case 5:
-					$date = JFactory::getDate('+1 day ' . date('Y-m-d'));
+					$date = JFactory::getDate('+1 day ' . date('Y-m-d', strtotime('now')));
 					$this->reset = $date->toSql();
 					break;
 			}

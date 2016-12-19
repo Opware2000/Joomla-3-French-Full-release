@@ -28,7 +28,7 @@ class JFormFieldFieldgroups extends JFormAbstractlist
 	 */
 	protected function getOptions()
 	{
-		$context = (string) $this->element['context'];
+		$extension = (string) $this->element['extension'];
 		$states    = $this->element['state'] ? $this->element['state'] : '0,1';
 		$states    = ArrayHelper::toInteger(explode(',', $states));
 
@@ -40,7 +40,7 @@ class JFormFieldFieldgroups extends JFormAbstractlist
 		$query->select('title AS text, id AS value, state');
 		$query->from('#__fields_groups');
 		$query->where('state IN (' . implode(',', $states) . ')');
-		$query->where('context = ' . $db->quote($context));
+		$query->where('extension = ' . $db->quote($extension));
 		$query->where('access IN (' . implode(',', $viewlevels) . ')');
 
 		$db->setQuery($query);

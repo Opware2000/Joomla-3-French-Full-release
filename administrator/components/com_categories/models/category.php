@@ -54,9 +54,9 @@ class CategoriesModelCategory extends JModelAdmin
 	 */
 	public function __construct($config = array())
 	{
-		parent::__construct($config);
 		$extension = JFactory::getApplication()->input->get('extension', 'com_content');
 		$this->typeAlias = $extension . '.category';
+		parent::__construct($config);
 	}
 
 	/**
@@ -474,7 +474,6 @@ class CategoriesModelCategory extends JModelAdmin
 	 */
 	public function save($data)
 	{
-		$dispatcher = JEventDispatcher::getInstance();
 		$table      = $this->getTable();
 		$input      = JFactory::getApplication()->input;
 		$pk         = (!empty($data['id'])) ? $data['id'] : (int) $this->getState($this->getName() . '.id');
@@ -549,7 +548,7 @@ class CategoriesModelCategory extends JModelAdmin
 		}
 
 		// Trigger the before save event.
-		$result = $dispatcher->trigger($this->event_before_save, array($context, &$table, $isNew));
+		$result = JFactory::getApplication()->triggerEvent($this->event_before_save, array($context, &$table, $isNew));
 
 		if (in_array(false, $result, true))
 		{
@@ -585,9 +584,9 @@ class CategoriesModelCategory extends JModelAdmin
 			}
 
 			// Detecting all item menus
-			$allLanguage = $table->language == '*';
+			$all_language = $table->language == '*';
 
-			if ($allLanguage && !empty($associations))
+			if ($all_language && !empty($associations))
 			{
 				JError::raiseNotice(403, JText::_('COM_CATEGORIES_ERROR_ALL_LANGUAGE_ASSOCIATED'));
 			}
@@ -600,7 +599,7 @@ class CategoriesModelCategory extends JModelAdmin
 				->where($db->quoteName('context') . ' = ' . $db->quote($this->associationsContext))
 				->where($db->quoteName('id') . ' = ' . (int) $table->id);
 			$db->setQuery($query);
-			$oldKey = $db->loadResult();
+			$old_key = $db->loadResult();
 
 			// Deleting old associations for the associated items
 			$query = $db->getQuery(true)
@@ -610,11 +609,11 @@ class CategoriesModelCategory extends JModelAdmin
 			if ($associations)
 			{
 				$query->where('(' . $db->quoteName('id') . ' IN (' . implode(',', $associations) . ') OR '
-					. $db->quoteName('key') . ' = ' . $db->quote($oldKey) . ')');
+					. $db->quoteName('key') . ' = ' . $db->quote($old_key) . ')');
 			}
 			else
 			{
-				$query->where($db->quoteName('key') . ' = ' . $db->quote($oldKey));
+				$query->where($db->quoteName('key') . ' = ' . $db->quote($old_key));
 			}
 
 			$db->setQuery($query);
@@ -631,7 +630,7 @@ class CategoriesModelCategory extends JModelAdmin
 			}
 
 			// Adding self to the association
-			if (!$allLanguage)
+			if (!$all_language)
 			{
 				$associations[$table->language] = (int) $table->id;
 			}
@@ -664,7 +663,7 @@ class CategoriesModelCategory extends JModelAdmin
 		}
 
 		// Trigger the after save event.
-		$dispatcher->trigger($this->event_after_save, array($context, &$table, $isNew));
+		JFactory::getApplication()->triggerEvent($this->event_after_save, array($context, &$table, $isNew));
 
 		// Rebuild the path for the category:
 		if (!$table->rebuildPath($table->id))
@@ -704,14 +703,13 @@ class CategoriesModelCategory extends JModelAdmin
 	{
 		if (parent::publish($pks, $value))
 		{
-			$dispatcher = JEventDispatcher::getInstance();
 			$extension = JFactory::getApplication()->input->get('extension');
 
 			// Include the content plugins for the change of category state event.
 			JPluginHelper::importPlugin('content');
 
 			// Trigger the onCategoryChangeState event.
-			$dispatcher->trigger('onCategoryChangeState', array($extension, $pks, $value));
+			JFactory::getApplication()->triggerEvent('onCategoryChangeState', array($extension, $pks, $value));
 
 			return true;
 		}
@@ -767,54 +765,6 @@ class CategoriesModelCategory extends JModelAdmin
 		}
 
 		// Clear the cache
-		$this->cleanCache();
-
-		return true;
-	}
-
-	/**
-	 * Batch tag a list of categories.
-	 *
-	 * @param   integer  $value     The value of the new tag.
-	 * @param   array    $pks       An array of row IDs.
-	 * @param   array    $contexts  An array of item contexts.
-	 *
-	 * @return  boolean true if successful; false otherwise.
-	 */
-	protected function batchTag($value, $pks, $contexts)
-	{
-		// Set the variables
-		$user = JFactory::getUser();
-		$table = $this->getTable();
-
-		foreach ($pks as $pk)
-		{
-			if ($user->authorise('core.edit', $contexts[$pk]))
-			{
-				$table->reset();
-				$table->load($pk);
-				$tags = array($value);
-
-				/** @var  JTableObserverTags  $tagsObserver */
-				$tagsObserver = $table->getObserverOfClass('JTableObserverTags');
-				$result = $tagsObserver->setNewTags($tags, false);
-
-				if (!$result)
-				{
-					$this->setError($table->getError());
-
-					return false;
-				}
-			}
-			else
-			{
-				$this->setError(JText::_('JLIB_APPLICATION_ERROR_BATCH_CANNOT_EDIT'));
-
-				return false;
-			}
-		}
-
-		// Clean the cache
 		$this->cleanCache();
 
 		return true;
@@ -961,7 +911,7 @@ class CategoriesModelCategory extends JModelAdmin
 			{
 				if (!in_array($childId, $pks))
 				{
-					$pks[] = $childId;
+					array_push($pks, $childId);
 				}
 			}
 
@@ -993,8 +943,6 @@ class CategoriesModelCategory extends JModelAdmin
 
 			// Unpublish because we are making a copy
 			$this->table->published = 0;
-
-			$this->createTagsHelper($this->tagsObserver, $this->type, $pk, $this->typeAlias, $this->table);
 
 			// Store the row.
 			if (!$this->table->store())
@@ -1155,8 +1103,6 @@ class CategoriesModelCategory extends JModelAdmin
 					return false;
 				}
 			}
-
-			$this->createTagsHelper($this->tagsObserver, $this->type, $pk, $this->typeAlias, $this->table);
 
 			// Store the row.
 			if (!$this->table->store())

@@ -92,7 +92,7 @@ class FieldsViewFields extends JViewLegacy
 
 		$this->addToolbar();
 
-		FieldsHelperInternal::addSubmenu($this->state->get('filter.context'), 'fields');
+		FieldsHelperInternal::addSubmenu($this->state->get('filter.component'), 'fields');
 		$this->sidebar = JHtmlSidebar::render();
 
 		return parent::display($tpl);
@@ -113,7 +113,7 @@ class FieldsViewFields extends JViewLegacy
 		$canDo     = JHelperContent::getActions($component, 'field', $fieldId);
 
 		// Get the toolbar object instance
-		$bar = JToolBar::getInstance('toolbar');
+		$bar = JToolbar::getInstance('toolbar');
 
 		// Avoid nonsense situation.
 		if ($component == 'com_fields')

@@ -75,28 +75,10 @@ class UsersHelper
 			);
 			JHtmlSidebar::addEntry(
 				JText::_('JGLOBAL_FIELD_GROUPS'),
-				'index.php?option=com_fields&view=groups&context=com_users.user',
+				'index.php?option=com_fields&view=groups&extension=com_users',
 				$vName == 'fields.groups'
 			);
 		}
-	}
-
-	/**
-	 * Gets a list of the actions that can be performed.
-	 *
-	 * @return  JObject
-	 *
-	 * @deprecated  3.2  Use JHelperContent::getActions() instead
-	 */
-	public static function getActions()
-	{
-		// Log usage of deprecated function
-		JLog::add(__METHOD__ . '() is deprecated, use JHelperContent::getActions() with new arguments order instead.', JLog::WARNING, 'deprecated');
-
-		// Get list of actions
-		$result = JHelperContent::getActions('com_users');
-
-		return $result;
 	}
 
 	/**

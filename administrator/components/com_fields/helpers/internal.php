@@ -21,24 +21,15 @@ class FieldsHelperInternal
 	/**
 	 * Configure the Linkbar.
 	 *
-	 * @param   string  $context  The context the fields are used for
-	 * @param   string  $vName    The view currently active
+	 * @param   string  $component  The component the fields are used for
+	 * @param   string  $vName      The view currently active
 	 *
 	 * @return  void
 	 *
 	 * @since    __DEPLOY_VERSION__
 	 */
-	public static function addSubmenu ($context, $vName)
+	public static function addSubmenu ($component, $vName)
 	{
-		$parts = FieldsHelper::extract($context);
-
-		if (!$parts)
-		{
-			return;
-		}
-
-		$component = $parts[0];
-
 		// Avoid nonsense situation.
 		if ($component == 'com_fields')
 		{

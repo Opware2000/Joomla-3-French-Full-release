@@ -16,7 +16,7 @@ $params->def('format', 'rss');
 
 $link = ModSyndicateHelper::getLink($params);
 
-if ($link === null)
+if (is_null($link))
 {
 	return;
 }

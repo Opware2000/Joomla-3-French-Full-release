@@ -27,12 +27,12 @@ class FieldsControllerGroup extends JControllerForm
 	protected $text_prefix = 'COM_FIELDS_GROUP';
 
 	/**
-	 * The component for which the group applies.
+	 * The extension for which the group applies.
 	 *
 	 * @var    string
 	 * @since   __DEPLOY_VERSION__
 	 */
-	private $component = '';
+	private $extension;
 
 	/**
 	 * Class constructor.
@@ -45,12 +45,7 @@ class FieldsControllerGroup extends JControllerForm
 	{
 		parent::__construct($config);
 
-		$parts = FieldsHelper::extract($this->input->getCmd('context'));
-
-		if ($parts)
-		{
-			$this->component = $parts[0];
-		}
+		$this->extension = $this->input->getCmd('extension');
 	}
 
 	/**
@@ -86,7 +81,7 @@ class FieldsControllerGroup extends JControllerForm
 	 */
 	protected function allowAdd($data = array())
 	{
-		return JFactory::getUser()->authorise('core.create', $this->component);
+		return JFactory::getUser()->authorise('core.create', $this->extension);
 	}
 
 	/**
@@ -105,19 +100,19 @@ class FieldsControllerGroup extends JControllerForm
 		$user = JFactory::getUser();
 
 		// Check general edit permission first.
-		if ($user->authorise('core.edit', $this->component))
+		if ($user->authorise('core.edit', $this->extension))
 		{
 			return true;
 		}
 
 		// Check edit on the record asset (explicit or inherited)
-		if ($user->authorise('core.edit', $this->component . '.fieldgroup.' . $recordId))
+		if ($user->authorise('core.edit', $this->extension . '.fieldgroup.' . $recordId))
 		{
 			return true;
 		}
 
 		// Check edit own on the record asset (explicit or inherited)
-		if ($user->authorise('core.edit.own', $this->component . '.fieldgroup.' . $recordId) || $user->authorise('core.edit.own', $this->component))
+		if ($user->authorise('core.edit.own', $this->extension . '.fieldgroup.' . $recordId) || $user->authorise('core.edit.own', $this->extension))
 		{
 			// Existing record already has an owner, get it
 			$record = $this->getModel()->getItem($recordId);

@@ -118,9 +118,8 @@ class FieldsModelField extends JModelAdmin
 
 			if ($data['title'] == $origTable->title)
 			{
-				list($title, $alias) = $this->generateNewTitle($data['group_id'], $data['alias'], $data['title']);
+				list($title, $alias) = $this->generateNewTitle($data['catid'], $data['alias'], $data['title']);
 				$data['title'] = $title;
-				$data['label'] = $title;
 				$data['alias'] = $alias;
 			}
 			else
@@ -324,15 +323,11 @@ class FieldsModelField extends JModelAdmin
 		if (empty($context) && isset($data['context']))
 		{
 			$context = $data['context'];
-			$parts   = FieldsHelper::extract($context);
+			$parts   = explode('.', $context);
 
 			$this->setState('field.context', $context);
-
-			if ($parts)
-			{
-				$this->setState('field.component', $parts[0]);
-				$this->setState('field.section', $parts[1]);
-			}
+			$this->setState('field.component', $parts[0]);
+			$this->setState('field.section', isset($parts[1]) ? $parts[1] : '');
 		}
 
 		// Get the form.
@@ -773,7 +768,7 @@ class FieldsModelField extends JModelAdmin
 		}
 
 		$form->setFieldAttribute('type', 'component', $component);
-		$form->setFieldAttribute('group_id', 'context', $this->state->get('field.context'));
+		$form->setFieldAttribute('group_id', 'extension', $component);
 		$form->setFieldAttribute('rules', 'component', $component);
 
 		// Trigger the default form events.

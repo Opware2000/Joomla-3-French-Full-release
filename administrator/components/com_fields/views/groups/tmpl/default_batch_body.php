@@ -9,6 +9,8 @@
 defined('_JEXEC') or die;
 
 JHtml::_('formbehavior.chosen', 'select');
+
+$extension   = $this->escape($this->state->get('filter.extension'));
 ?>
 
 <div class="row-fluid">

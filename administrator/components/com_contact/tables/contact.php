@@ -30,16 +30,14 @@ class ContactTableContact extends JTable
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  &$db  Database connector object
+	 * @param   JDatabaseDriver  $db  Database connector object
 	 *
 	 * @since   1.0
 	 */
-	public function __construct(&$db)
+	public function __construct(JDatabaseDriver $db)
 	{
+		$this->typeAlias = 'com_contact.contact';
 		parent::__construct('#__contact_details', 'id', $db);
-
-		JTableObserverTags::createObserver($this, array('typeAlias' => 'com_contact.contact'));
-		JTableObserverContenthistory::createObserver($this, array('typeAlias' => 'com_contact.contact'));
 	}
 
 	/**
@@ -132,6 +130,17 @@ class ContactTableContact extends JTable
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		$this->default_con = (int) $this->default_con;
 
 		if (JFilterInput::checkAttribute(array('href', $this->webpage)))
@@ -182,34 +191,34 @@ class ContactTableContact extends JTable
 		if (!empty($this->metakey))
 		{
 			// Array of characters to remove.
-			$badCharacters = array("\n", "\r", "\"", "<", ">");
+			$bad_characters = array("\n", "\r", "\"", "<", ">");
 
 			// Remove bad characters.
-			$afterClean = StringHelper::str_ireplace($badCharacters, "", $this->metakey);
+			$after_clean = StringHelper::str_ireplace($bad_characters, "", $this->metakey);
 
 			// Create array using commas as delimiter.
-			$keys = explode(',', $afterClean);
-			$cleanKeys = array();
+			$keys = explode(',', $after_clean);
+			$clean_keys = array();
 
 			foreach ($keys as $key)
 			{
 				// Ignore blank keywords.
 				if (trim($key))
 				{
-					$cleanKeys[] = trim($key);
+					$clean_keys[] = trim($key);
 				}
 			}
 
 			// Put array back together delimited by ", "
-			$this->metakey = implode(", ", $cleanKeys);
+			$this->metakey = implode(", ", $clean_keys);
 		}
 
 		// Clean up description -- eliminate quotes and <> brackets
 		if (!empty($this->metadesc))
 		{
 			// Only process if not empty
-			$badCharacters = array("\"", "<", ">");
-			$this->metadesc = StringHelper::str_ireplace($badCharacters, "", $this->metadesc);
+			$bad_characters = array("\"", "<", ">");
+			$this->metadesc = StringHelper::str_ireplace($bad_characters, "", $this->metadesc);
 		}
 
 		return true;

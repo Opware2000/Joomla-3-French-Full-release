@@ -8,6 +8,8 @@
  */
 defined('_JEXEC') or die;
 
+use Joomla\String\StringHelper;
+
 /**
  * Group Model
  *
@@ -67,18 +69,18 @@ class FieldsModelGroup extends JModelAdmin
 	 */
 	public function getForm($data = array(), $loadData = true)
 	{
-		$context = $this->getState('filter.context');
+		$extension = $this->getState('filter.extension');
 		$jinput = JFactory::getApplication()->input;
 
-		if (empty($context) && isset($data['context']))
+		if (empty($extension) && isset($data['extension']))
 		{
-			$context = $data['context'];
-			$this->setState('filter.context', $context);
+			$extension = $data['extension'];
+			$this->setState('filter.extension', $extension);
 		}
 
 		// Get the form.
 		$form = $this->loadForm(
-			'com_fields.group.' . $context, 'group',
+			'com_fields.group.' . $extension, 'group',
 			array(
 				'control'   => 'jform',
 				'load_data' => $loadData,
@@ -91,12 +93,12 @@ class FieldsModelGroup extends JModelAdmin
 		}
 
 		// Modify the form based on Edit State access controls.
-		if (empty($data['context']))
+		if (empty($data['extension']))
 		{
-			$data['context'] = $context;
+			$data['extension'] = $extension;
 		}
 
-		if (!JFactory::getUser()->authorise('core.edit.state', $context . '.fieldgroup.' . $jinput->get('id')))
+		if (!JFactory::getUser()->authorise('core.edit.state', $extension . '.fieldgroup.' . $jinput->get('id')))
 		{
 			// Disable fields for display.
 			$form->setFieldAttribute('ordering', 'disabled', 'true');
@@ -126,7 +128,7 @@ class FieldsModelGroup extends JModelAdmin
 			return false;
 		}
 
-		return JFactory::getUser()->authorise('core.delete', $record->context . '.fieldgroup.' . (int) $record->id);
+		return JFactory::getUser()->authorise('core.delete', $record->extension . '.fieldgroup.' . (int) $record->id);
 	}
 
 	/**
@@ -146,11 +148,11 @@ class FieldsModelGroup extends JModelAdmin
 		// Check for existing fieldgroup.
 		if (!empty($record->id))
 		{
-			return $user->authorise('core.edit.state', $record->context . '.fieldgroup.' . (int) $record->id);
+			return $user->authorise('core.edit.state', $record->extension . '.fieldgroup.' . (int) $record->id);
 		}
 
 		// Default to component settings.
-		return $user->authorise('core.edit.state', $record->context);
+		return $user->authorise('core.edit.state', $record->extension);
 	}
 
 	/**
@@ -166,8 +168,8 @@ class FieldsModelGroup extends JModelAdmin
 	{
 		parent::populateState();
 
-		$context = JFactory::getApplication()->getUserStateFromRequest('com_fields.groups.context', 'context', 'com_fields', 'CMD');
-		$this->setState('filter.context', $context);
+		$extension = JFactory::getApplication()->getUserStateFromRequest('com_fields.groups.extension', 'extension', 'com_fields', 'CMD');
+		$this->setState('filter.extension', $extension);
 	}
 
 	/**
@@ -181,7 +183,7 @@ class FieldsModelGroup extends JModelAdmin
 	 */
 	protected function getReorderConditions($table)
 	{
-		return 'context = ' . $this->_db->quote($table->context);
+		return 'extension = ' . $this->_db->quote($table->extension);
 	}
 
 	/**
@@ -201,13 +203,8 @@ class FieldsModelGroup extends JModelAdmin
 	{
 		parent::preprocessForm($form, $data, $group);
 
-		$parts = FieldsHelper::extract($this->state->get('filter.context'));
-
-		if ($parts)
-		{
-			// Set the access control rules field component value.
-			$form->setFieldAttribute('rules', 'component', $parts[0]);
-		}
+		// Set the access control rules field component value.
+		$form->setFieldAttribute('rules', 'component', $this->state->get('filter.extension'));
 	}
 
 	/**
@@ -230,9 +227,9 @@ class FieldsModelGroup extends JModelAdmin
 			// Pre-select some filters (Status, Language, Access) in edit form if those have been selected in Field Group Manager
 			if (!$data->id)
 			{
-				// Check for which context the Field Group Manager is used and get selected fields
-				$context = substr($app->getUserState('com_fields.groups.filter.context'), 4);
-				$filters = (array) $app->getUserState('com_fields.groups.' . $context . '.filter');
+				// Check for which extension the Field Group Manager is used and get selected fields
+				$extension = substr($app->getUserState('com_fields.groups.filter.extension'), 4);
+				$filters = (array) $app->getUserState('com_fields.groups.' . $extension . '.filter');
 
 				$data->set(
 					'state',
@@ -270,7 +267,7 @@ class FieldsModelGroup extends JModelAdmin
 			// Prime required properties.
 			if (empty($item->id))
 			{
-				$item->context = $this->getState('filter.context');
+				$item->extension = $this->getState('filter.extension');
 			}
 
 			// Convert the created and modified dates to local user time for display in the form.
@@ -314,8 +311,8 @@ class FieldsModelGroup extends JModelAdmin
 	 */
 	protected function cleanCache($group = null, $client_id = 0)
 	{
-		$context = JFactory::getApplication()->input->get('context');
+		$extension = JFactory::getApplication()->input->get('extension');
 
-		parent::cleanCache($context);
+		parent::cleanCache($extension);
 	}
 }

@@ -124,8 +124,6 @@ class ContentModelArticle extends JModelAdmin
 				return false;
 			}
 
-			$this->createTagsHelper($this->tagsObserver, $this->type, $pk, $this->typeAlias, $this->table);
-
 			// Store the row.
 			if (!$this->table->store())
 			{
@@ -652,15 +650,15 @@ class ContentModelArticle extends JModelAdmin
 					->where('content_id IN (' . implode(',', $pks) . ')');
 				$db->setQuery($query);
 
-				$oldFeatured = $db->loadColumn();
+				$old_featured = $db->loadColumn();
 
 				// We diff the arrays to get a list of the articles that are newly featured
-				$newFeatured = array_diff($pks, $oldFeatured);
+				$new_featured = array_diff($pks, $old_featured);
 
 				// Featuring.
 				$tuples = array();
 
-				foreach ($newFeatured as $pk)
+				foreach ($new_featured as $pk)
 				{
 					$tuples[] = $pk . ', 0';
 				}
